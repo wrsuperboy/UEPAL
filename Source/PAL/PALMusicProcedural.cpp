@@ -16,19 +16,7 @@ UPALMusicProcedural::UPALMusicProcedural(const FObjectInitializer& ObjectInitial
 	MyOpl = EmuOpl::CreateEmuopl(EOplCoreType::OPLCORE_NUKED, EOplChipType::OPLCHIP_OPL3, SAMPLE_RATE);
 	MyRixPlayer = new RixPlayer(MyOpl);
 
-	FString FileFullPath = FString(TEXT("C:\\Users\\wwrus\\Desktop\\PAL98\\MUS.MKF"));
-	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-	IFileHandle* MusicFileHanlde = PlatformFile.OpenRead(*FileFullPath);
-	if (MusicFileHanlde)
-	{
-		MyRixPlayer->Load(MusicFileHanlde, true);
-		bReady = true;
-	}
-	else
-	{
-		bReady = false;
-	}
-
+	bReady = false;
 	FadeType = EFadeType::NONE;
 	MusicNum = -1;
 	NextMusicNum = -1;
@@ -37,6 +25,15 @@ UPALMusicProcedural::UPALMusicProcedural(const FObjectInitializer& ObjectInitial
 	bNextLoop = false;
 
 	OnSoundWaveProceduralUnderflow.BindUObject(this, &UPALMusicProcedural::FillBuffer);
+}
+
+void UPALMusicProcedural::Load(IFileHandle* RixMKFFileHandle)
+{
+	if (RixMKFFileHandle)
+	{
+		MyRixPlayer->Load(RixMKFFileHandle, true);
+		bReady = true;
+	}
 }
 
 void UPALMusicProcedural::Play(int32 InMusicNum, bool bInLoop, float FadeTime)

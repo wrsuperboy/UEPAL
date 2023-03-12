@@ -63,7 +63,7 @@ void APALSceneGameMode::LoadRoleSprites()
 	bLoadRoleSprites = true;
 }
 
-FORCEINLINE void APALSceneGameMode::LoadResources()
+void APALSceneGameMode::LoadResources()
 {
 	if (bLoadGlobalData)
 	{

@@ -11,7 +11,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Config = Game)
 class PAL_API UPALAudioManager : public UWorldSubsystem
 {
 	GENERATED_BODY()
@@ -24,6 +24,9 @@ private:
 	UAudioComponent* MusicAudioComponent;
 
 	bool bIsSoundEnabled;
+
+	UPROPERTY(Config)
+	FString MusicMKFPath;
 
 public:
 	void PlayMusic(SIZE_T MusicNum, bool bLoop, float FadeTime);

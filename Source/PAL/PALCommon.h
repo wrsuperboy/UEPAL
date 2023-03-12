@@ -96,8 +96,6 @@ public:
 
 	UTexture2D* GetItemImage(SIZE_T ItemImageNum);
 
-	IFileHandle* OpenRixSoundFile();
-
 	uint8* LoadSound(SIZE_T SoundNum, int32& OutSize);
 
 	EPALSoundFormat GetSoundFormat() const;

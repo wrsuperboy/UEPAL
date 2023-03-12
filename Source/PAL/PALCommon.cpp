@@ -386,13 +386,6 @@ UTexture2D* UPALCommon::GetItemImage(SIZE_T ItemImageNum)
 	return ItemImage;
 }
 
-IFileHandle* UPALCommon::OpenRixSoundFile()
-{
-	FString FileFullPath = FString(GameResourcePath).Append(TEXT("MUS.mkf"));
-	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-	return PlatformFile.OpenRead(*FileFullPath);
-}
-
 uint8* UPALCommon::LoadSound(SIZE_T SoundNum, int32& OutSize)
 {
 	UPALMKF* SoundMKF;

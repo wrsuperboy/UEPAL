@@ -149,6 +149,9 @@ void UPALAudioManager::EnableSound(bool bEnabled)
 void UPALAudioManager::Initialize(FSubsystemCollectionBase& Collection)
 {
 	MusicProcedural = NewObject<UPALMusicProcedural>(GetWorld());
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+	IFileHandle* MusicFileHanlde = PlatformFile.OpenRead(*MusicMKFPath);
+	MusicProcedural->Load(MusicFileHanlde);
 	MusicAudioComponent = CreateSound2D(GetWorld(), MusicProcedural, 1.f, 1.f, 0.f, nullptr, false, false);
 	bIsSoundEnabled = true;
 }

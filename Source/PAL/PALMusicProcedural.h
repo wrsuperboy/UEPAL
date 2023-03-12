@@ -41,6 +41,8 @@ private:
 	bool bReady;
 
 public:
+	void Load(IFileHandle* RixMKFFileHandle);
+
 	void Play(int32 InMusicNum, bool bInLoop, float FadeTime);
 
 	void FillBuffer(USoundWaveProcedural* Self, int32 SamplesToGenerate);

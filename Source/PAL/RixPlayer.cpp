@@ -399,14 +399,14 @@ FORCEINLINE void RixPlayer::PrepareA0b0(uint16 Index, uint16 v)  /* important !*
 	{
 		return;
 	}
-	int16 High = 0, Low = 0;
-	uint32 Res;
 	int32 Res1 = (v - 0x2000) * 0x19;
 	if (Res1 == (int32)0xff)
 	{
 		return;
 	}
-	Low = Res1 / 0x2000;
+	int16 High = 0;
+	int16 Low = Res1 / 0x2000;
+	uint32 Res;
 	if (Low < 0)
 	{
 		Low = 0x18 - Low; High = (int16)Low < 0 ? 0xFFFF : 0;

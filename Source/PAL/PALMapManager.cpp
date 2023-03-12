@@ -209,7 +209,7 @@ bool UPALMapManager::ShouldCreateSubsystem(UObject* Outer) const
 	}
 
 	UWorld* World = Cast<UWorld>(Outer);
-	return World->GetWorldSettings()->DefaultGameMode == APALSceneGameMode::StaticClass();
+	return World && World->GetWorldSettings()->DefaultGameMode == APALSceneGameMode::StaticClass();
 }
 
 void UPALMapManager::Initialize(FSubsystemCollectionBase& Collection)
