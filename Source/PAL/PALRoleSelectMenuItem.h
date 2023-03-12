@@ -17,9 +17,9 @@ class PAL_API UPALRoleSelectMenuItem : public UUserWidget
 public:
 	DECLARE_DELEGATE_OneParam(FMenuRoleSelect, SIZE_T);
 
-	FMenuRoleSelect OnSelect;
+	FMenuRoleSelect OnSelected;
 
-	FMenuRoleSelect OnHover;
+	FMenuRoleSelect OnHovered;
 
 private:
 	SIZE_T RoleId;

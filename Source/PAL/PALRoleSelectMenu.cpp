@@ -20,8 +20,8 @@ void UPALRoleSelectMenu::AddPartyRole(SIZE_T RoleId, APALPlayerState* PlayerStat
 	UPALRoleSelectMenuItem* MenuItem = CreateWidget<UPALRoleSelectMenuItem>(GetOwningPlayer(), UPALRoleSelectMenuItem::StaticClass());
 	const FString& RoleName = GetGameInstance()->GetSubsystem<UPALCommon>()->GetWord(PlayerState->GetPlayerStateData()->PlayerRoles.Name[RoleId]);
 	MenuItem->Init(RoleId, RoleName, bSelectable);
-	MenuItem->OnSelect.BindUObject(this, &UPALRoleSelectMenu::SelectRole);
-	MenuItem->OnHover.BindUObject(this, &UPALRoleSelectMenu::ChangeRole);
+	MenuItem->OnSelected.BindUObject(this, &UPALRoleSelectMenu::SelectRole);
+	MenuItem->OnHovered.BindUObject(this, &UPALRoleSelectMenu::ChangeRole);
 	ItemList.Add(MenuItem);
 	if (ItemContainer)
 	{

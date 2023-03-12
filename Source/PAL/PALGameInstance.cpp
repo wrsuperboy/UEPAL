@@ -8,76 +8,76 @@
 
 EGameDistribution UPALGameInstance::GetGameDistribution() const
 {
-    return GetSubsystem<UPALCommon>()->GetGameDistribution();
+	return GetSubsystem<UPALCommon>()->GetGameDistribution();
 }
 
 UPALGameData* UPALGameInstance::GetGameData() const
 {
-    return GameData;
+	return GameData;
 }
 
 UPALGameStateData* UPALGameInstance::GetGameStateData() const
 {
-    return GameStateData;
+	return GameStateData;
 }
 
 void UPALGameInstance::SetGameStateData(UPALGameStateData* NewGameStateData)
 {
-    GameStateData = NewGameStateData;
+	GameStateData = NewGameStateData;
 }
 
 UPALPlayerStateData* UPALGameInstance::GetMainPlayerStateData() const
 {
-    return MainPlayerStateData;
+	return MainPlayerStateData;
 }
 
 void UPALGameInstance::SetMainPlayerStateData(UPALPlayerStateData* NewMainPlayerStateData)
 {
-    MainPlayerStateData = NewMainPlayerStateData;
+	MainPlayerStateData = NewMainPlayerStateData;
 }
 
 ULocalPlayer* UPALGameInstance::GetMainPlayer() const
 {
-    // Only count local players with an actual PC as part of the indexing
-    for (ULocalPlayer* LocalPlayer : GetLocalPlayers())
-    {
-        
-        APlayerController* PlayerController = LocalPlayer->GetPlayerController(nullptr);
-        if (!PlayerController)
-        {
-            continue;
-        }
+	// Only count local players with an actual PC as part of the indexing
+	for (ULocalPlayer* LocalPlayer : GetLocalPlayers())
+	{
+		
+		APlayerController* PlayerController = LocalPlayer->GetPlayerController(nullptr);
+		if (!PlayerController)
+		{
+			continue;
+		}
 
-        APlayerState* PlayerState = PlayerController->GetPlayerState<APlayerState>();
-        if (!PlayerState)
-        {
-            continue;
-        }
+		APlayerState* PlayerState = PlayerController->GetPlayerState<APlayerState>();
+		if (!PlayerState)
+		{
+			continue;
+		}
 
-        if (MainPlayerUniqueId == PlayerState->GetUniqueId())
-        {
-            return LocalPlayer;
-        }
-    }
-    return nullptr;
+		if (MainPlayerUniqueId == PlayerState->GetUniqueId())
+		{
+			return LocalPlayer;
+		}
+	}
+	return nullptr;
 }
 
 bool UPALGameInstance::IsMainPlayerSet() const {
-    return MainPlayerUniqueId.IsValid();
+	return MainPlayerUniqueId.IsValid();
 }
 
 void UPALGameInstance::SetMainPlayerByUniqueId(const FUniqueNetIdRepl& UniqueId)
 {
-    MainPlayerUniqueId = UniqueId;
+	MainPlayerUniqueId = UniqueId;
 }
 
 void UPALGameInstance::InitGameData()
 {
-    GameData = GetSubsystem<UPALCommon>()->LoadGameData();
+	GameData = GetSubsystem<UPALCommon>()->LoadGameData();
 }
 
 void UPALGameInstance::Init()
 {
-    Super::Init();
-    InitGameData();
+	Super::Init();
+	InitGameData();
 }

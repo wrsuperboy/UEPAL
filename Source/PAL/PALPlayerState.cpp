@@ -11,7 +11,7 @@ UPALPlayerStateData* APALPlayerState::InitPlayerStateData(SIZE_T SaveSlot)
 {
 	if (SaveSlot == 0)
 	{
-        PlayerStateData = LoadDefaultGame();
+		PlayerStateData = LoadDefaultGame();
 	}
 	else
 	{
@@ -87,41 +87,41 @@ UPALPlayerStateData* APALPlayerState::GetPlayerStateData() const
 
 UPALPlayerStateData* APALPlayerState::LoadDefaultGame() const
 {
-    UPALPlayerStateData* Data = NewObject<UPALPlayerStateData>();
-    // Set some default player data.
-    Data->Cash = 0;
-    Data->CollectValue = 0;
-    Data->Layer = 0;
+	UPALPlayerStateData* Data = NewObject<UPALPlayerStateData>();
+	// Set some default player data.
+	Data->Cash = 0;
+	Data->CollectValue = 0;
+	Data->Layer = 0;
 
-    FMemory::Memzero(Data->PoisonStatus, sizeof(Data->PoisonStatus));
-    FMemory::Memzero(&(Data->ExpAll), sizeof(Data->ExpAll));
+	FMemory::Memzero(Data->PoisonStatus, sizeof(Data->PoisonStatus));
+	FMemory::Memzero(&(Data->ExpAll), sizeof(Data->ExpAll));
 
-    UPALGameData* GameData = GetGameInstance<UPALGameInstance>()->GetGameData();
-    FMemory::Memcpy(Data->PlayerRoles, GameData->_PlayerRoles);
+	UPALGameData* GameData = GetGameInstance<UPALGameInstance>()->GetGameData();
+	FMemory::Memcpy(Data->PlayerRoles, GameData->_PlayerRoles);
 
-    for (SIZE_T i = 0; i < MAX_PLAYER_ROLES; i++)
-    {
-        Data->ExpAll.PrimaryExp[i].Level = Data->PlayerRoles.Level[i];
-        Data->ExpAll.HealthExp[i].Level = Data->PlayerRoles.Level[i];
-        Data->ExpAll.MagicExp[i].Level = Data->PlayerRoles.Level[i];
-        Data->ExpAll.AttackExp[i].Level = Data->PlayerRoles.Level[i];
-        Data->ExpAll.MagicPowerExp[i].Level = Data->PlayerRoles.Level[i];
-        Data->ExpAll.DefenseExp[i].Level = Data->PlayerRoles.Level[i];
-        Data->ExpAll.DexterityExp[i].Level = Data->PlayerRoles.Level[i];
-        Data->ExpAll.FleeExp[i].Level = Data->PlayerRoles.Level[i];
-    }
+	for (SIZE_T i = 0; i < MAX_PLAYER_ROLES; i++)
+	{
+		Data->ExpAll.PrimaryExp[i].Level = Data->PlayerRoles.Level[i];
+		Data->ExpAll.HealthExp[i].Level = Data->PlayerRoles.Level[i];
+		Data->ExpAll.MagicExp[i].Level = Data->PlayerRoles.Level[i];
+		Data->ExpAll.AttackExp[i].Level = Data->PlayerRoles.Level[i];
+		Data->ExpAll.MagicPowerExp[i].Level = Data->PlayerRoles.Level[i];
+		Data->ExpAll.DefenseExp[i].Level = Data->PlayerRoles.Level[i];
+		Data->ExpAll.DexterityExp[i].Level = Data->PlayerRoles.Level[i];
+		Data->ExpAll.FleeExp[i].Level = Data->PlayerRoles.Level[i];
+	}
 
 	FMemory::Memzero(Data->EquipmentEffects, sizeof(Data->EquipmentEffects));
 	FMemory::Memzero(Data->RoleStatus, sizeof(Data->RoleStatus));
-    Data->bAutoBattle = false;
-    Data->CurrentEquipPart = -1;
-    Data->CurrentMainMenuItemNum = 0;
-    Data->CurrentSystemMenuItemNum = 0;
+	Data->bAutoBattle = false;
+	Data->CurrentEquipPart = -1;
+	Data->CurrentMainMenuItemNum = 0;
+	Data->CurrentSystemMenuItemNum = 0;
 
 	// Add one default here for the scripts to run
 	Data->Party.Add(NewObject<UPALRoleData>());
 	Data->LastPartyRoleId[0] = 0;
-    return Data;
+	return Data;
 }
 
 UPALPlayerStateData* APALPlayerState::LoadSavedGame(SIZE_T SaveSlot)

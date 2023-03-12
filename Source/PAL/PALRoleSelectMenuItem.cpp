@@ -21,12 +21,12 @@ void UPALRoleSelectMenuItem::Init(SIZE_T InRoleId, const FString& InRoleName, bo
 void UPALRoleSelectMenuItem::Select()
 {
 	PAL_DebugMsg("Role select menu item selected");
-	OnSelect.ExecuteIfBound(RoleId);
+	OnSelected.ExecuteIfBound(RoleId);
 }
 
 void UPALRoleSelectMenuItem::Hover()
 {
-	OnHover.ExecuteIfBound(RoleId);
+	OnHovered.ExecuteIfBound(RoleId);
 }
 
 TSharedRef<SWidget> UPALRoleSelectMenuItem::RebuildWidget()
@@ -59,13 +59,13 @@ void UPALRoleSelectMenuItem::NativeConstruct()
 	RootWidget->SetStyle(ButtonStyle);
 	if (bSelectable)
 	{
-		TScriptDelegate<> OnClicked;
-		OnClicked.BindUFunction(this, "Select");
-		RootWidget->OnClicked.Add(OnClicked);
+		TScriptDelegate<> OnClickedDelegate;
+		OnClickedDelegate.BindUFunction(this, "Select");
+		RootWidget->OnClicked.Add(OnClickedDelegate);
 	}
-	TScriptDelegate<> OnHovered;
-	OnHovered.BindUFunction(this, "Hover");
-	RootWidget->OnHovered.Add(OnHovered);
+	TScriptDelegate<> OnHoveredDelegate;
+	OnHoveredDelegate.BindUFunction(this, "Hover");
+	RootWidget->OnHovered.Add(OnHoveredDelegate);
 
 	UTextBlock* RoleButtonText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
 	FSlateFontInfo FontInfo(Common->GetDefaultFont(), FMath::RoundToInt32(12 * UI_PIXEL_TO_UNIT));

@@ -17,9 +17,9 @@ class PAL_API UPALBuyMenuItem : public UUserWidget
 public:
 	DECLARE_DELEGATE_OneParam(FMenuBuyItemSelect, int16);
 
-	FMenuBuyItemSelect OnSelect;
+	FMenuBuyItemSelect OnSelected;
 
-	FMenuBuyItemSelect OnHover;
+	FMenuBuyItemSelect OnHovered;
 
 private:
 	int16 Item;

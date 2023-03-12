@@ -21,12 +21,12 @@ void UPALItemSelectMenuItem::Init(int16 InItem, const FString& InItemName, SIZE_
 
 void UPALItemSelectMenuItem::Select()
 {
-	OnSelect.ExecuteIfBound(Item);
+	OnSelected.ExecuteIfBound(Item);
 }
 
 void UPALItemSelectMenuItem::Hover()
 {
-	OnHover.ExecuteIfBound(Item);
+	OnHovered.ExecuteIfBound(Item);
 }
 
 TSharedRef<SWidget> UPALItemSelectMenuItem::RebuildWidget()
@@ -60,13 +60,13 @@ void UPALItemSelectMenuItem::NativeConstruct()
 	RootWidget->SetTouchMethod(EButtonTouchMethod::PreciseTap);
 	if (bSelectable)
 	{
-		TScriptDelegate<> OnClicked;
-		OnClicked.BindUFunction(this, "Select");
-		RootWidget->OnClicked.Add(OnClicked);
+		TScriptDelegate<> OnClickedDelegate;
+		OnClickedDelegate.BindUFunction(this, "Select");
+		RootWidget->OnClicked.Add(OnClickedDelegate);
 	}
-	TScriptDelegate<> OnHovered;
-	OnHovered.BindUFunction(this, "Hover");
-	RootWidget->OnHovered.Add(OnHovered);
+	TScriptDelegate<> OnHoveredDelegate;
+	OnHoveredDelegate.BindUFunction(this, "Hover");
+	RootWidget->OnHovered.Add(OnHoveredDelegate);
 	 
 	UHorizontalBox* Layout = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
 	UButtonSlot* LayoutSlot = Cast<UButtonSlot>(RootWidget->AddChild(Layout));

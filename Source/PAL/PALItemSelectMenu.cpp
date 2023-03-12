@@ -130,8 +130,8 @@ void UPALItemSelectMenu::InitInternal()
 		verify(IventoryItem.Amount >= IventoryItem.InUseAmount);
 		UPALItemSelectMenuItem* MenuItem = CreateWidget<UPALItemSelectMenuItem>(this, UPALItemSelectMenuItem::StaticClass());
 		MenuItem->Init(IventoryItem.Item, Common->GetWord(IventoryItem.Item), IventoryItem.Amount - IventoryItem.InUseAmount, bSelectable, bEquipped);
-		MenuItem->OnSelect.BindUObject(this, &UPALItemSelectMenu::SelectItem);
-		MenuItem->OnHover.BindUObject(this, &UPALItemSelectMenu::ChangeItem);
+		MenuItem->OnSelected.BindUObject(this, &UPALItemSelectMenu::SelectItem);
+		MenuItem->OnHovered.BindUObject(this, &UPALItemSelectMenu::ChangeItem);
 		MenuItemList.Add(MenuItem);
 	}
 }

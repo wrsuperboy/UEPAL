@@ -25,12 +25,12 @@ uint16 UPALUseMagicMenuItem::GetMagic() const
 
 void UPALUseMagicMenuItem::Select()
 {
-	OnSelect.ExecuteIfBound(Magic);
+	OnSelected.ExecuteIfBound(Magic);
 }
 
 void UPALUseMagicMenuItem::Hover()
 {
-	OnHover.ExecuteIfBound(Magic);
+	OnHovered.ExecuteIfBound(Magic);
 }
 
 TSharedRef<SWidget> UPALUseMagicMenuItem::RebuildWidget()
@@ -64,13 +64,13 @@ void UPALUseMagicMenuItem::NativeConstruct()
 	RootWidget->SetTouchMethod(EButtonTouchMethod::PreciseTap);
 	if (bEnabled)
 	{
-		TScriptDelegate<> OnClicked;
-		OnClicked.BindUFunction(this, "Select");
-		RootWidget->OnClicked.Add(OnClicked);
+		TScriptDelegate<> OnClickedDelegate;
+		OnClickedDelegate.BindUFunction(this, "Select");
+		RootWidget->OnClicked.Add(OnClickedDelegate);
 	}
-	TScriptDelegate<> OnHovered;
-	OnHovered.BindUFunction(this, "Hover");
-	RootWidget->OnHovered.Add(OnHovered);
+	TScriptDelegate<> OnHoveredDelegate;
+	OnHoveredDelegate.BindUFunction(this, "Hover");
+	RootWidget->OnHovered.Add(OnHoveredDelegate);
 
 	UHorizontalBox* Layout = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
 	UButtonSlot* LayoutSlot = Cast<UButtonSlot>(RootWidget->AddChild(Layout));

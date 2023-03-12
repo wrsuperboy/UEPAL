@@ -86,8 +86,8 @@ void UPALInGameUseMagicMenu::RefreshMagic()
 
 			UPALUseMagicMenuItem* MagicItem = CreateWidget<UPALUseMagicMenuItem>(this, UPALUseMagicMenuItem::StaticClass());
 			MagicItem->Init(Magic, Common->GetWord(Magic), MP, bEnabled);
-			MagicItem->OnSelect.BindUObject(this, &UPALInGameUseMagicMenu::SelectMagic);
-			MagicItem->OnHover.BindUObject(this, &UPALInGameUseMagicMenu::ChangeMagic);
+			MagicItem->OnSelected.BindUObject(this, &UPALInGameUseMagicMenu::SelectMagic);
+			MagicItem->OnHovered.BindUObject(this, &UPALInGameUseMagicMenu::ChangeMagic);
 			MenuItemList.Add(MagicItem);
 		}
 	}
@@ -465,7 +465,7 @@ void UPALInGameUseMagicMenu::NativeConstruct()
 		RoleInfoBox->Init(RoleData->RoleId);
 		RoleInfoBox->SetSelectionEnabled(false);
 		RoleInfoBox->SetPadding(FMargin(0, 0, 3, 0) * UI_PIXEL_TO_UNIT);
-		RoleInfoBox->OnSelect.BindUObject(this, &UPALInGameUseMagicMenu::SelectTarget);
+		RoleInfoBox->OnSelected.BindUObject(this, &UPALInGameUseMagicMenu::SelectTarget);
 		RoleInfoBoxArray->AddChildToHorizontalBox(RoleInfoBox);
 	}
 	UCanvasPanelSlot* RoleInfoBoxArraySlot = Canvas->AddChildToCanvas(RoleInfoBoxArray);

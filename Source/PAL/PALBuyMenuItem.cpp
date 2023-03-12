@@ -20,12 +20,12 @@ void UPALBuyMenuItem::Init(int16 InItem, const FString& InItemName, uint16 InPri
 
 void UPALBuyMenuItem::Select()
 {
-	OnSelect.ExecuteIfBound(Item);
+	OnSelected.ExecuteIfBound(Item);
 }
 
 void UPALBuyMenuItem::Hover()
 {
-	OnHover.ExecuteIfBound(Item);
+	OnHovered.ExecuteIfBound(Item);
 }
 
 TSharedRef<SWidget> UPALBuyMenuItem::RebuildWidget()
@@ -57,12 +57,12 @@ void UPALBuyMenuItem::NativeConstruct()
 	ButtonStyle.SetHoveredForeground(FLinearColor(Common->GetDefaultPalette()[249]));
 	RootWidget->SetStyle(ButtonStyle);
 	RootWidget->SetTouchMethod(EButtonTouchMethod::PreciseTap);
-	TScriptDelegate<> OnClicked;
-	OnClicked.BindUFunction(this, "Select");
-	RootWidget->OnClicked.Add(OnClicked);
-	TScriptDelegate<> OnHovered;
-	OnHovered.BindUFunction(this, "Hover");
-	RootWidget->OnHovered.Add(OnHovered);
+	TScriptDelegate<> OnClickedDelegate;
+	OnClickedDelegate.BindUFunction(this, "Select");
+	RootWidget->OnClicked.Add(OnClickedDelegate);
+	TScriptDelegate<> OnHoveredDelegate;
+	OnHoveredDelegate.BindUFunction(this, "Hover");
+	RootWidget->OnHovered.Add(OnHoveredDelegate);
 
 	UHorizontalBox* Layout = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
 	UButtonSlot* LayoutSlot = Cast<UButtonSlot>(RootWidget->AddChild(Layout));

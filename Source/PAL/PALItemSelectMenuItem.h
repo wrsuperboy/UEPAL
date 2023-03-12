@@ -18,9 +18,9 @@ class PAL_API UPALItemSelectMenuItem : public UUserWidget
 public:
 	DECLARE_DELEGATE_OneParam(FMenuItemSelect, int16);
 
-	FMenuItemSelect OnSelect;
+	FMenuItemSelect OnSelected;
 
-	FMenuItemSelect OnHover;
+	FMenuItemSelect OnHovered;
 
 private:
 	int16 Item;

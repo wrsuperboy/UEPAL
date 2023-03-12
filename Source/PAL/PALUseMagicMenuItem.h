@@ -17,9 +17,9 @@ class PAL_API UPALUseMagicMenuItem : public UUserWidget
 public:
 	DECLARE_DELEGATE_OneParam(FMenuItemSelect, uint16);
 
-	FMenuItemSelect OnSelect;
+	FMenuItemSelect OnSelected;
 
-	FMenuItemSelect OnHover;
+	FMenuItemSelect OnHovered;
 
 private:
 	uint16 Magic;

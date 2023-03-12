@@ -20,7 +20,7 @@ class PAL_API UPALRoleInfoBox : public UUserWidget
 public:
 	DECLARE_DELEGATE_OneParam(FRoleInfoSelect, SIZE_T);
 
-	FRoleInfoSelect OnSelect;
+	FRoleInfoSelect OnSelected;
 
 private:
 	SIZE_T RoleId;

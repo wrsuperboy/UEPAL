@@ -119,7 +119,7 @@ void UPALRoleInfoBox::Select()
 	if (bSelectionEnabled)
 	{
 		PAL_DebugMsg("Role info box selected");
-		OnSelect.ExecuteIfBound(RoleId);
+		OnSelected.ExecuteIfBound(RoleId);
 	}
 }
 

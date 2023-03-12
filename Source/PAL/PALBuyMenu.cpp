@@ -282,8 +282,8 @@ void UPALBuyMenu::NativeConstruct()
 		
 		UPALBuyMenuItem* BuyMenuItem = CreateWidget<UPALBuyMenuItem>(this, UPALBuyMenuItem::StaticClass());
 		BuyMenuItem->Init(Item, Common->GetWord(Item), GameStateData->Objects[Item].Item.Price);
-		BuyMenuItem->OnSelect.BindUObject(this, &UPALBuyMenu::OnItemSelect);
-		BuyMenuItem->OnHover.BindUObject(this, &UPALBuyMenu::OnItemChange);
+		BuyMenuItem->OnSelected.BindUObject(this, &UPALBuyMenu::OnItemSelect);
+		BuyMenuItem->OnHovered.BindUObject(this, &UPALBuyMenu::OnItemChange);
 		ItemListBox->AddChildToVerticalBox(BuyMenuItem);
 	}
 
