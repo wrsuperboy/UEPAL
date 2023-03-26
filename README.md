@@ -6,7 +6,7 @@ To start working with this project, you'll need to follow a few simple steps:
 1. Ensure that you have Unreal Engine and Visual Studio installed.
 2. Ensure that you have PAL game files.
 3. Configure in `Config/DefaultGame.ini`, change `GameResourcePath` under `/Script/PAL.PALCommon` into your game path.
-4. Open the project by clicking `PAL.sln` or `PAL.uproject`.
+4. Open the project by clicking on `PAL.uproject`.
 
 Please note that:
 - This project is built on Unreal Engine 5.1, and may not be compatible with earlier or later versions of the engine.
