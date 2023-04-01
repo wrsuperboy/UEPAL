@@ -402,7 +402,6 @@ void APALPlayerController::OnEscape()
 			{
 				CurrentMenu->RemoveFromParent();
 				SetShowMouseCursor(false);
-				ReleaseControllFromGame();
 				CurrentMenu = nullptr;
 			}
 		}
