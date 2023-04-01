@@ -386,7 +386,7 @@ void APALPlayerController::OnEscape()
 	{
 		if (!CurrentMenu)
 		{
-			if (GetWorld()->GetGameState<APALGameState>()->IsInMainGame())
+			if (GetWorld()->GetGameState<APALGameState>()->IsInMainGame() && !IsControlledByGame())
 			{
 				CurrentMenu = CreateWidget<UPALInGameMenu>(this, UPALInGameMenu::StaticClass());
 				CurrentMenu->AddToViewport(0);
@@ -402,6 +402,7 @@ void APALPlayerController::OnEscape()
 			{
 				CurrentMenu->RemoveFromParent();
 				SetShowMouseCursor(false);
+				ReleaseControllFromGame();
 				CurrentMenu = nullptr;
 			}
 		}
