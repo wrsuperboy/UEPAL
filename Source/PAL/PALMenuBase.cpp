@@ -26,7 +26,7 @@ TSharedRef<SWidget> UPALMenuBase::RebuildWidget()
 void UPALMenuBase::NativeConstruct()
 {
 	Super::NativeConstruct();
-	bIsFocusable = true;
+	SetIsFocusable(true);
 	Canvas = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("SafeCanvas"));
 	UCanvasPanel* RootWidget = Cast<UCanvasPanel>(GetRootWidget());
 	RootWidget->SetIsEnabled(true);

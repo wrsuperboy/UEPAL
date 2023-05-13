@@ -56,13 +56,14 @@ PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
 TSharedRef<SWidget> UPALMenuAnchor::RebuildWidget()
 {
+	InitUseApplicationMenuStack(false);
 	MyMenuAnchor = SNew(SMenuAnchor)
-		.Placement(Placement)
-		.FitInWindow(bFitInWindow)
+		.Placement(GetPlacement())
+		.FitInWindow(IsFitInWindow())
 		.OnGetMenuContent(BIND_UOBJECT_DELEGATE(FOnGetContent, HandleGetMenuContentNew))
 		.OnMenuOpenChanged(BIND_UOBJECT_DELEGATE(FOnIsOpenChanged, HandleMenuOpenChanged))
-		.ShouldDeferPaintingAfterWindowContent(ShouldDeferPaintingAfterWindowContent)
-		.UseApplicationMenuStack(UseApplicationMenuStack);
+		.ShouldDeferPaintingAfterWindowContent(IsDeferPaintingAfterWindowContent())
+		.UseApplicationMenuStack(IsUseApplicationMenuStack());
 
 	if (GetChildrenCount() > 0)
 	{

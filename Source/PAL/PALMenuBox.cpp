@@ -86,7 +86,6 @@ UPALMenuAnchor* UPALMenuBox::AddMenuItemWithBind(const FString& Name, UObject* I
 	MenuAnchor->OnGetUserMenuContentEvent.BindUFunction(InObject, InFunctionName);
 	MenuAnchor->AddChild(ItemButton);
 	MenuAnchor->SetPlacement(EMenuPlacement::MenuPlacement_RightLeftCenter);
-	MenuAnchor->UseApplicationMenuStack = false;
 	TScriptDelegate<> OnClick;
 	OnClick.BindUFunction(MenuAnchor, FName("OpenAndFocus"));
 	ItemButton->OnClicked.Add(OnClick);
