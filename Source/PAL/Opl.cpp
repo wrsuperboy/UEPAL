@@ -409,7 +409,7 @@ static void Opl3EnvelopeCalc(Opl3Slot* Slot)
 		}
 		else if (Slot->Key && Shift > 0 && RateHi != 0x0f)
 		{
-			EgInc = ((~Slot->EgRout) << Shift) >> 4;
+			EgInc = ~Slot->EgRout >> (4 - Shift);
 		}
 		break;
 	case envelope_gen_num_decay:
@@ -838,10 +838,8 @@ static void Opl3ChannelSetupAlg(Opl3Channel* Channel)
 	}
 }
 
-static void Opl3ChannelWriteC0(Opl3Channel* Channel, uint8 Data)
+static void Opl3ChannelUpdateAlg(Opl3Channel* Channel)
 {
-	Channel->Fb = (Data & 0x0e) >> 1;
-	Channel->Con = Data & 0x01;
 	Channel->Alg = Channel->Con;
 	if (Channel->Chip->NewM)
 	{
@@ -866,6 +864,13 @@ static void Opl3ChannelWriteC0(Opl3Channel* Channel, uint8 Data)
 	{
 		Opl3ChannelSetupAlg(Channel);
 	}
+}
+
+static void Opl3ChannelWriteC0(Opl3Channel* Channel, uint8 Data)
+{
+	Channel->Fb = (Data & 0x0e) >> 1;
+	Channel->Con = Data & 0x01;
+	Opl3ChannelUpdateAlg(Channel);
 	if (Channel->Chip->NewM)
 	{
 		Channel->Cha = ((Data >> 4) & 0x01) ? ~0 : 0;
@@ -938,11 +943,14 @@ static void Opl3ChannelSet4Op(Opl3Chip* Chip, uint8 Data)
 		{
 			Chip->Channel[ChNum].ChType = ch_4op;
 			Chip->Channel[ChNum + 3].ChType = ch_4op2;
+			Opl3ChannelUpdateAlg(&Chip->Channel[ChNum]);
 		}
 		else
 		{
 			Chip->Channel[ChNum].ChType = ch_2op;
 			Chip->Channel[ChNum + 3].ChType = ch_2op;
+			Opl3ChannelUpdateAlg(&Chip->Channel[ChNum]);
+			Opl3ChannelUpdateAlg(&Chip->Channel[ChNum + 3]);
 		}
 	}
 }
