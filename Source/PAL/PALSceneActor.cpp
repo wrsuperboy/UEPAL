@@ -11,7 +11,7 @@ APALSceneActor::APALSceneActor()
 	PrimaryActorTick.bCanEverTick = false;
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> TileMeshRef(TEXT("/Script/Engine.StaticMesh'/Game/PAL_Tile.PAL_Tile'"));
 	static ConstructorHelpers::FObjectFinder<UMaterial> TileMaterialRef(TEXT("/Script/Engine.Material'/Game/PAL_M_Tile.PAL_M_Tile'"));
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> DecoratorMeshRef(TEXT("/Script/Engine.StaticMesh'/Game/PAL_Tile.PAL_Tile'"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> DecoratorMeshRef(TEXT("/Script/Engine.StaticMesh'/Game/PAL_Plane.PAL_Plane'"));
 	static ConstructorHelpers::FObjectFinder<UMaterial> DecoratorMaterialRef(TEXT("/Script/Engine.Material'/Game/PAL_M_Decorator.PAL_M_Decorator'"));
 	TileMesh = TileMeshRef.Object;
 	TileMaterial = TileMaterialRef.Object;
