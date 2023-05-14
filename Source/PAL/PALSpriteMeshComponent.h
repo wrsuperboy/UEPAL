@@ -5,18 +5,19 @@
 #include "CoreMinimal.h"
 #include "Components/MeshComponent.h"
 #include "PALSprite.h"
+#include "ProceduralMeshComponent.h"
 #include "PALSpriteMeshComponent.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PAL_API UPALSpriteMeshComponent : public UStaticMeshComponent
+class PAL_API UPALSpriteMeshComponent : public UProceduralMeshComponent
 {
 	GENERATED_BODY()
 
 public:
-	UPALSpriteMeshComponent();
+	UPALSpriteMeshComponent(const FObjectInitializer& ObjectInitializer);
 	
 private:
 	UPROPERTY(VisibleAnywhere)

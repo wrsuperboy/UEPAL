@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "PAL.h"
 #include "PALSprite.h"
+#include "PAL.h"
 #include "PALSceneActor.generated.h"
 
 UCLASS()
@@ -19,23 +19,29 @@ public:
 
 private:
 	UPROPERTY()
-	UStaticMesh* StaticMesh;
+	UStaticMesh* TileMesh;
 
 	UPROPERTY()
-	UMaterial* Material;
+	UStaticMesh* DecoratorMesh;
+
+	UPROPERTY()
+	UMaterial* TileMaterial;
+
+	UPROPERTY()
+	UMaterial* DecoratorMaterial;
 
 	UPROPERTY()
 	TArray<UStaticMeshComponent*> TileComponents;
 
 	UPROPERTY()
-	TArray<UStaticMeshComponent*> DecolaratorComponents;
+	TArray<UStaticMeshComponent*> DecoratorMeshComponents;
 
 public:
 	void SetTile(SIZE_T X, SIZE_T Y, SIZE_T H, const FPALPosition3d& Position, UTexture2D* Texture);
 
-	void AddDecolarator(const FPALPosition3d& Position, UTexture2D* Texture);
+	void AddDecorator(const FPALPosition3d& Position, UTexture2D* Texture);
 
-	void ClearDecolarators();
+	void ClearDecorators();
 
 protected:
 	// Called when the game starts or when spawned

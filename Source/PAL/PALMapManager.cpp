@@ -64,7 +64,7 @@ void UPALMapManager::LoadMap(const SIZE_T SceneNum, UWorld* CurrentWorld)
 
 	if (CurrentMapNum != MapNum)
 	{
-		SceneActor->ClearDecolarators();
+		SceneActor->ClearDecorators();
 		PAL_DebugMsg(FString(TEXT("Creating map tiles for map number ")).Append(FString::FromInt(MapNum)));
 
 		TileSprite->Preload();
@@ -96,7 +96,7 @@ void UPALMapManager::LoadMap(const SIZE_T SceneNum, UWorld* CurrentWorld)
 					{
 						UTexture2D* Texture = TileSprite->GetFrame(FrameNum);
 						int32 Z = GetMapTileHeight(Tiles, 1, X, Y, H);
-						SceneActor->AddDecolarator(FPALPosition3d((double)X * 32 + (double)H * 16, (double)Y * 32 + (double)H * 16 + (double)Z * 8 * SQRT_3, (double)Z * 8), Texture);
+						SceneActor->AddDecorator(FPALPosition3d((double)X * 32 + (double)H * 16, (double)Y * 32 + (double)H * 16 + (double)Z * 8 * SQRT_3, (double)Z * 8), Texture);
 					}
 				}
 			}

@@ -12,17 +12,15 @@
 				"Engine",
 				"CoreUObject",
 				"UMG",
-				"GameplayCameras"
+				"GameplayCameras",
+				"ProceduralMeshComponent"
 			]
 		}
 	],
 	"Plugins": [
 		{
 			"Name": "ModelingToolsEditorMode",
-			"Enabled": true,
-			"TargetAllowList": [
-				"Editor"
-			]
+			"Enabled": true
 		}
 	]
 }

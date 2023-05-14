@@ -12,7 +12,7 @@ public class PAL : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore", "AudioExtensions" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore", "AudioExtensions", "ProceduralMeshComponent" });
 		
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");

@@ -9,10 +9,14 @@ APALSceneActor::APALSceneActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> PlaneMeshRef(TEXT("StaticMesh'/Game/PAL_Plane.PAL_Plane'"));
-	static ConstructorHelpers::FObjectFinder<UMaterial> MaskMaterialRef(TEXT("Material'/Game/PAL_MaskMaterial.PAL_MaskMaterial'"));
-	StaticMesh = PlaneMeshRef.Object;
-	Material = MaskMaterialRef.Object;
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> TileMeshRef(TEXT("/Script/Engine.StaticMesh'/Game/PAL_Tile.PAL_Tile'"));
+	static ConstructorHelpers::FObjectFinder<UMaterial> TileMaterialRef(TEXT("/Script/Engine.Material'/Game/PAL_M_Tile.PAL_M_Tile'"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> DecoratorMeshRef(TEXT("/Script/Engine.StaticMesh'/Game/PAL_Tile.PAL_Tile'"));
+	static ConstructorHelpers::FObjectFinder<UMaterial> DecoratorMaterialRef(TEXT("/Script/Engine.Material'/Game/PAL_M_Decorator.PAL_M_Decorator'"));
+	TileMesh = TileMeshRef.Object;
+	TileMaterial = TileMaterialRef.Object;
+	DecoratorMesh = DecoratorMeshRef.Object;
+	DecoratorMaterial = DecoratorMaterialRef.Object;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
 }
 
@@ -23,14 +27,14 @@ void APALSceneActor::SetTile(SIZE_T X, SIZE_T Y, SIZE_T H, const FPALPosition3d&
 	static FName TextureParameterName("PAL_Texture2D");
 	DynamicMaterial->SetTextureParameterValue(TextureParameterName, Texture);
 	StaticMeshComponent->SetRelativeLocation(Position.toLocation());
-	StaticMeshComponent->SetRelativeScale3D(FVector3d(Texture->GetSizeX() * PIXEL_TO_UNIT / 100., Texture->GetSizeY() * PIXEL_TO_UNIT * 2 / 100., 1.));
+	StaticMeshComponent->SetRelativeScale3D(FVector3d(32 * PIXEL_TO_UNIT / 100., 32 * PIXEL_TO_UNIT / 100., 1.));
 }
 
-void APALSceneActor::AddDecolarator(const FPALPosition3d& Position, UTexture2D* Texture)
+void APALSceneActor::AddDecorator(const FPALPosition3d& Position, UTexture2D* Texture)
 {
 	UStaticMeshComponent* StaticMeshComponent = NewObject<UStaticMeshComponent>(this, UStaticMeshComponent::StaticClass());
-	StaticMeshComponent->SetStaticMesh(StaticMesh);
-	UMaterialInstanceDynamic* DynamicMaterial = UMaterialInstanceDynamic::Create(Material, nullptr);
+	StaticMeshComponent->SetStaticMesh(DecoratorMesh);
+	UMaterialInstanceDynamic* DynamicMaterial = UMaterialInstanceDynamic::Create(DecoratorMaterial, nullptr);
 	static FName TextureParameterName("PAL_Texture2D");
 	DynamicMaterial->SetTextureParameterValue(TextureParameterName, Texture);
 	StaticMeshComponent->SetMaterial(0, DynamicMaterial);
@@ -39,16 +43,16 @@ void APALSceneActor::AddDecolarator(const FPALPosition3d& Position, UTexture2D* 
 	StaticMeshComponent->SetRelativeScale3D(FVector3d(Texture->GetSizeX() * PIXEL_TO_UNIT / 100., Texture->GetSizeY() * PIXEL_TO_UNIT / 100., 1.));
 	StaticMeshComponent->SetRelativeRotation(FRotator(0., 0., 60.));
 	StaticMeshComponent->RegisterComponent();
-	DecolaratorComponents.Add(StaticMeshComponent);
+	DecoratorMeshComponents.Add(StaticMeshComponent);
 }
 
-void APALSceneActor::ClearDecolarators()
+void APALSceneActor::ClearDecorators()
 {
-	for (UStaticMeshComponent* DecolaratorComponent : DecolaratorComponents)
+	for (UStaticMeshComponent* DecoratorComponent : DecoratorMeshComponents)
 	{
-		DecolaratorComponent->DestroyComponent();
+		DecoratorComponent->DestroyComponent();
 	}
-	DecolaratorComponents.Empty();
+	DecoratorMeshComponents.Empty();
 }
 
 // Called when the game starts or when spawned
@@ -68,8 +72,8 @@ void APALSceneActor::PreInitializeComponents()
 			for (SIZE_T Y = 0; Y < 128; Y++)
 			{
 				UStaticMeshComponent* StaticMeshComponent = NewObject<UStaticMeshComponent>(this, UStaticMeshComponent::StaticClass());
-				StaticMeshComponent->SetStaticMesh(StaticMesh);
-				UMaterialInstanceDynamic* DynamicMaterial = UMaterialInstanceDynamic::Create(Material, nullptr);
+				StaticMeshComponent->SetStaticMesh(TileMesh);
+				UMaterialInstanceDynamic* DynamicMaterial = UMaterialInstanceDynamic::Create(TileMaterial, nullptr);
 				StaticMeshComponent->SetRelativeLocation(FPALPosition3d((double)X * 32 + (double)H * 16, (double)Y * 32 + (double)H * 16, 0).toLocation());
 				StaticMeshComponent->SetMaterial(0, DynamicMaterial);
 				StaticMeshComponent->SetupAttachment(RootComponent);
