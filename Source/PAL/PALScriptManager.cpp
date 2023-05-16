@@ -16,6 +16,7 @@
 #include "PALPanCameraScriptRunner.h"
 #include "PALMapManager.h"
 #include "EngineUtils.h"
+#include "PALTimedFadeScriptRunner.h"
 
 bool UPALScriptManager::RunTriggerScript(uint16& InOutScriptEntry, const uint16 InEventObjectId, bool bRewriteScriptEntry, bool& bOutSuccess)
 {
@@ -1199,10 +1200,9 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		break;
 
 	case 0x004E:
-		//
 		// Load the last saved game
-		//
-		GameMode->FadeOut(1);
+		ScriptRunner = GetWorld()->SpawnActor<APALTimedFadeScriptRunner>();
+		Cast<APALTimedFadeScriptRunner>(ScriptRunner)->Init(false, 1);
 		GameMode->ReloadInNextTick(PlayerState->CurrentSaveSlot);
 		return nullptr; // don't go further
 
@@ -1215,12 +1215,14 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 
 	case 0x0050:
 		// screen fade out
-		GameMode->FadeOut(Script->Operand[0] ? Script->Operand[0] : 1);
+		ScriptRunner = GetWorld()->SpawnActor<APALTimedFadeScriptRunner>();
+		Cast<APALTimedFadeScriptRunner>(ScriptRunner)->Init(false, Script->Operand[0] ? Script->Operand[0] : 1);
 		break;
 
 	case 0x0051:
 		// screen fade in
-		GameMode->FadeIn((static_cast<int16>(Script->Operand[0]) > 0) ? Script->Operand[0] : 1);
+		ScriptRunner = GetWorld()->SpawnActor<APALTimedFadeScriptRunner>(); 
+		Cast<APALTimedFadeScriptRunner>(ScriptRunner)->Init(true, (static_cast<int16>(Script->Operand[0]) > 0) ? Script->Operand[0] : 1);
 		break;
 
 	case 0x0052:
@@ -1674,9 +1676,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		break;
 
 	case 0x0080:
-		//
 		// Toggle day/night palette
-		//
 		GameState->SetDayNight(!GameStateData->bNightPalette);
 		// TODO PAL_PaletteFade(gpGlobals->wNumPalette, GameStateData->bNightPalette, !(Script->Operand[0]));
 		break;

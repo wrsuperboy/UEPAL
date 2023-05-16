@@ -20,7 +20,7 @@ public:
 	UPALSpriteMeshComponent(const FObjectInitializer& ObjectInitializer);
 	
 private:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY()
 	UPALSprite* Sprite;
 
 	UPROPERTY(VisibleAnywhere)
@@ -32,6 +32,7 @@ private:
 
 	FVector3d LocationOffset;
 
+	UPROPERTY(VisibleAnywhere)
 	int16 Layer;
 
 	bool bChangedLayer;
