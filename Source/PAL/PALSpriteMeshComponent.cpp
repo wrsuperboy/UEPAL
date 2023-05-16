@@ -21,6 +21,56 @@ void UPALSpriteMeshComponent::SetSprite(UPALSprite* NewSprite)
 {
 	NewSprite->Preload();
 	this->Sprite = NewSprite;
+	ClearAllMeshSections();
+	const SIZE_T FrameCount = NewSprite->GetFrameCount();
+	for (SIZE_T FrameNum = 0; FrameNum < FrameCount; FrameNum++)
+	{
+		UTexture2D* Texture = Sprite->GetFrame(FrameNum);
+		const int32 Width = Texture->GetSizeX();
+		const int32 Height = Texture->GetSizeY();
+		const FColor* TextureData = reinterpret_cast<const FColor*>(Texture->GetPlatformData()->Mips[0].BulkData.LockReadOnly());
+		TArray<FVector> Vertices;
+		TArray<int32> Triangles;
+		TArray<FVector2D> UV0;
+		const float InvWidth = 1.0f / Width;
+		const float InvHeight = 1.0f / Height;
+		int32 TriangleIndex = 0;
+		for (int32 Y = 0; Y < Height; Y++)
+		{
+			for (int32 X = 0; X < Width; X++)
+			{
+				const FColor& Color = TextureData[Y * Width + X];
+				if (Color.A != 0)
+				{
+					Vertices.Add(FVector(X, Y, 0));
+					UV0.Add(FVector2D(X * InvWidth, Y * InvHeight));
+					Vertices.Add(FVector(X, Y + 1, 0));
+					UV0.Add(FVector2D(X * InvWidth, (Y + 1) * InvHeight));
+					Vertices.Add(FVector(X + 1, Y, 0));
+					UV0.Add(FVector2D((X + 1) * InvWidth, Y * InvHeight));
+					Triangles.Add(TriangleIndex++);
+					Triangles.Add(TriangleIndex++);
+					Triangles.Add(TriangleIndex++);
+					Vertices.Add(FVector(X + 1, Y, 0));
+					UV0.Add(FVector2D((X + 1) * InvWidth, Y * InvHeight));
+					Vertices.Add(FVector(X, Y + 1, 0));
+					UV0.Add(FVector2D(X * InvWidth, (Y + 1) * InvHeight));
+					Vertices.Add(FVector(X + 1, Y + 1, 0));
+					UV0.Add(FVector2D((X + 1) * InvWidth, (Y + 1) * InvHeight));
+					Triangles.Add(TriangleIndex++);
+					Triangles.Add(TriangleIndex++);
+					Triangles.Add(TriangleIndex++);
+				}
+			}
+		}
+		Texture->GetPlatformData()->Mips[0].BulkData.Unlock();
+		CreateMeshSection(FrameNum, Vertices, Triangles, TArray<FVector>(), UV0, TArray<FColor>(), TArray<FProcMeshTangent>(), false);
+		SetMeshSectionVisible(FrameNum, false);
+	}
+	if (CurrentFrameNum < FrameCount)
+	{
+		SetMeshSectionVisible(CurrentFrameNum, false);
+	}
 	bChangedSprite = true;
 }
 
@@ -31,58 +81,19 @@ void UPALSpriteMeshComponent::SetFrame(SIZE_T FrameNum)
 		return;
 	}
 
-	bChangedSprite = false;
-	CurrentFrameNum = FrameNum;
-
 	if (Sprite == nullptr || Sprite->GetFrameCount() <= FrameNum)
 	{
 		return;
 	}
-	
+
+	bChangedSprite = false;
+	SetMeshSectionVisible(CurrentFrameNum, false);
+	CurrentFrameNum = FrameNum;
+
+	SetMeshSectionVisible(FrameNum, true);
 	UTexture2D* Texture = Sprite->GetFrame(FrameNum);
-
-	const int32 Width = Texture->GetSizeX();
-	const int32 Height = Texture->GetSizeY();
-	const FColor* TextureData = reinterpret_cast<const FColor*>(Texture->GetPlatformData()->Mips[0].BulkData.LockReadOnly());
-	TArray<FVector> Vertices;
-	TArray<int32> Triangles;
-	TArray<FVector2D> UV0;
-	const float InvWidth = 1.0f / Width;
-	const float InvHeight = 1.0f / Height;
-	int32 TriangleIndex = 0;
-	for (int32 Y = 0; Y < Height; Y++)
-	{
-		for (int32 X = 0; X < Width; X++)
-		{
-			const FColor& Color = TextureData[Y * Width + X];
-			if (Color.A != 0)
-			{
-				Vertices.Add(FVector(X, Y, 0));
-				UV0.Add(FVector2D(X * InvWidth, Y * InvHeight));
-				Vertices.Add(FVector(X, Y + 1, 0));
-				UV0.Add(FVector2D(X * InvWidth, (Y + 1) * InvHeight));
-				Vertices.Add(FVector(X + 1, Y, 0));
-				UV0.Add(FVector2D((X + 1) * InvWidth, Y * InvHeight));
-				Triangles.Add(TriangleIndex++);
-				Triangles.Add(TriangleIndex++);
-				Triangles.Add(TriangleIndex++);
-				Vertices.Add(FVector(X + 1, Y, 0));
-				UV0.Add(FVector2D((X + 1) * InvWidth, Y * InvHeight));
-				Vertices.Add(FVector(X, Y + 1, 0));
-				UV0.Add(FVector2D(X * InvWidth, (Y + 1) * InvHeight));
-				Vertices.Add(FVector(X + 1, Y + 1, 0));
-				UV0.Add(FVector2D((X + 1) * InvWidth, (Y + 1) * InvHeight));
-				Triangles.Add(TriangleIndex++);
-				Triangles.Add(TriangleIndex++);
-				Triangles.Add(TriangleIndex++);
-			}
-		}
-	}
-	Texture->GetPlatformData()->Mips[0].BulkData.Unlock();
-	CreateMeshSection(0, Vertices, Triangles, TArray<FVector>(), UV0, TArray<FColor>(), TArray<FProcMeshTangent>(), false);
-
 	DynamicMaterial->SetTextureParameterValue(FName("PAL_Texture2D"), Texture);
-	SetMaterial(0, DynamicMaterial);
+	SetMaterial(FrameNum, DynamicMaterial);
 
 	if (Layer >= 0)
 	{
