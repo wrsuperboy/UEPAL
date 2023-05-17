@@ -44,8 +44,8 @@ struct _Opl3Slot {
 	int16 FbMod;
 	int16* Mod;
 	int16 Prout;
-	int16 EgRout;
-	int16 EgOut;
+	uint16 EgRout;
+	uint16 EgOut;
 	uint8 EgInc;
 	uint8 EgGen;
 	uint8 EgRate;

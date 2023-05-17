@@ -1067,69 +1067,54 @@ void Opl3WriteReg(Opl3Chip* Chip, uint16 Reg, uint8 v)
 	}
 }
 
+FORCEINLINE void OPL3ProcessSlot(Opl3Slot* Slot)
+{
+	Opl3SlotCalcFB(Slot);
+	Opl3EnvelopeCalc(Slot);
+	Opl3PhaseGenerate(Slot);
+	Opl3SlotGenerate(Slot);
+}
+
 void Opl3Generate(Opl3Chip* Chip, int16* Buf)
 {
-	uint8 ii;
-	uint8 jj;
-	int16 accm;
-	uint8 Shift = 0;
-
 	Buf[1] = Opl3ClipSample(Chip->MixBuff[1]);
 
-	for (ii = 0; ii < 15; ii++)
+	for (uint8 ii = 0; ii < 15; ii++)
 	{
-		Opl3SlotCalcFB(&Chip->Slot[ii]);
-		Opl3EnvelopeCalc(&Chip->Slot[ii]);
-		Opl3PhaseGenerate(&Chip->Slot[ii]);
-		Opl3SlotGenerate(&Chip->Slot[ii]);
+		OPL3ProcessSlot(&Chip->Slot[ii]);
 	}
-
+		
 	Chip->MixBuff[0] = 0;
-	for (ii = 0; ii < 18; ii++)
+	for (uint8 ii = 0; ii < 18; ii++)
 	{
-		accm = 0;
-		for (jj = 0; jj < 4; jj++)
-		{
-			accm += *Chip->Channel[ii].Out[jj];
-		}
-		Chip->MixBuff[0] += (int16)(accm & Chip->Channel[ii].Cha);
+		int16* (&Out)[4] = Chip->Channel[ii].Out;
+		int16 Accumulator = *Out[0] + *Out[1] + *Out[2] + *Out[3];
+		Chip->MixBuff[0] += (int16)(Accumulator & Chip->Channel[ii].Cha);
 	}
 
-	for (ii = 15; ii < 18; ii++)
+	for (uint8 ii = 15; ii < 18; ii++)
 	{
-		Opl3SlotCalcFB(&Chip->Slot[ii]);
-		Opl3EnvelopeCalc(&Chip->Slot[ii]);
-		Opl3PhaseGenerate(&Chip->Slot[ii]);
-		Opl3SlotGenerate(&Chip->Slot[ii]);
+		OPL3ProcessSlot(&Chip->Slot[ii]);
 	}
 
 	Buf[0] = Opl3ClipSample(Chip->MixBuff[0]);
 
-	for (ii = 18; ii < 33; ii++)
+	for (uint8 ii = 18; ii < 33; ii++)
 	{
-		Opl3SlotCalcFB(&Chip->Slot[ii]);
-		Opl3EnvelopeCalc(&Chip->Slot[ii]);
-		Opl3PhaseGenerate(&Chip->Slot[ii]);
-		Opl3SlotGenerate(&Chip->Slot[ii]);
+		OPL3ProcessSlot(&Chip->Slot[ii]);
 	}
 
 	Chip->MixBuff[1] = 0;
-	for (ii = 0; ii < 18; ii++)
+	for (uint8 ii = 0; ii < 18; ii++)
 	{
-		accm = 0;
-		for (jj = 0; jj < 4; jj++)
-		{
-			accm += *Chip->Channel[ii].Out[jj];
-		}
-		Chip->MixBuff[1] += (int16)(accm & Chip->Channel[ii].Chb);
+		int16* (&Out)[4] = Chip->Channel[ii].Out;
+		int16 Accumulator = *Out[0] + *Out[1] + *Out[2] + *Out[3];
+		Chip->MixBuff[1] += (int16)(Accumulator & Chip->Channel[ii].Chb);
 	}
 
-	for (ii = 33; ii < 36; ii++)
+	for (uint8 ii = 33; ii < 36; ii++)
 	{
-		Opl3SlotCalcFB(&Chip->Slot[ii]);
-		Opl3EnvelopeCalc(&Chip->Slot[ii]);
-		Opl3PhaseGenerate(&Chip->Slot[ii]);
-		Opl3SlotGenerate(&Chip->Slot[ii]);
+		OPL3ProcessSlot(&Chip->Slot[ii]);
 	}
 
 	if ((Chip->Timer & 0x3f) == 0x3f)
@@ -1152,6 +1137,7 @@ void Opl3Generate(Opl3Chip* Chip, int16* Buf)
 
 	Chip->Timer++;
 
+	uint8 Shift = 0;
 	Chip->EgAdd = 0;
 	if (Chip->EgTimer)
 	{
