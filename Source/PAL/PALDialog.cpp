@@ -285,6 +285,54 @@ bool UPALDialog::IsDialog() const
 	return DialogLocation == EPALDialogLocation::DialogCenterWindow;
 }
 
+bool UPALDialog::IsScrollToEnd() const
+{
+	if (TextScrollBox)
+	{
+		float CurrentScrollOffset = TextScrollBox->GetScrollOffset();
+		float MaxScrollOffset = TextScrollBox->GetScrollOffsetOfEnd();
+
+		return CurrentScrollOffset >= MaxScrollOffset - 1.;
+	}
+	else 
+	{
+		return true;
+	}
+}
+
+void UPALDialog::ScrollToEnd()
+{
+	if (TextScrollBox)
+	{
+		float CurrentScrollOffset = TextScrollBox->GetScrollOffset();
+		float MaxScrollOffset = TextScrollBox->GetScrollOffsetOfEnd();
+
+		if (CurrentScrollOffset < MaxScrollOffset)
+		{
+			TextScrollBox->SetScrollOffset(MaxScrollOffset);
+		}
+		TextScrollBox->ScrollToEnd();
+	}
+}
+
+void UPALDialog::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	if (TextScrollBox)
+	{
+		float CurrentScrollOffset = TextScrollBox->GetScrollOffset();
+		float MaxScrollOffset = TextScrollBox->GetScrollOffsetOfEnd();
+
+		if (CurrentScrollOffset < MaxScrollOffset)
+		{
+			float ScrollSpeed = 12.f * UI_PIXEL_TO_UNIT;
+			CurrentScrollOffset += ScrollSpeed * InDeltaTime;
+			TextScrollBox->SetScrollOffset(CurrentScrollOffset);
+		}
+	}
+}
+
 TSharedRef<SWidget> UPALDialog::RebuildWidget()
 {
 	TSharedRef<SWidget> Widget = Super::RebuildWidget();
@@ -299,6 +347,7 @@ TSharedRef<SWidget> UPALDialog::RebuildWidget()
 
 void UPALDialog::NativeConstruct()
 {
+	Super::NativeConstruct();
 	UCanvasPanel* RootWidget = Cast<UCanvasPanel>(GetRootWidget());
 	UPALCommon* Common = GetGameInstance()->GetSubsystem<UPALCommon>();
 	switch (DialogLocation)

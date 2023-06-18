@@ -9,6 +9,18 @@ void APALDialogWaitScriptRunner::Init(UPALDialog* InDialog)
 	MarkInitialized();
 }
 
+void APALDialogWaitScriptRunner::OnSearch()
+{
+	if (Dialog->IsScrollToEnd())
+	{
+		Clear();
+	}
+	else
+	{
+		Dialog->ScrollToEnd();
+	}
+}
+
 void APALDialogWaitScriptRunner::Clear()
 {
 	if (Dialog && Dialog->IsValidLowLevel())
@@ -22,7 +34,7 @@ void APALDialogWaitScriptRunner::Clear()
 void APALDialogWaitScriptRunner::BeginPlay()
 {
 	Super::BeginPlay();
-	BindedAction = PlayerController->InputComponent->BindAction("Search", IE_Pressed, this, &APALDialogWaitScriptRunner::Clear);
+	BindedAction = PlayerController->InputComponent->BindAction("Search", IE_Pressed, this, &APALDialogWaitScriptRunner::OnSearch);
 }
 
 void APALDialogWaitScriptRunner::TickRun(float DeltaTime)

@@ -14,9 +14,14 @@ GEngine->AddOnScreenDebugMessage(INDEX_NONE, 10.f, FColor::White, Message)
 
 #define SQRT_3 1.732050807569
 
-#define PIXEL_TO_UNIT 4.
+constexpr float PIXEL_TO_UNIT = 4.;
 
-constexpr float UI_PIXEL_TO_UNIT = 3.;
+constexpr float UI_PIXEL_TO_UNIT = 
+#if PLATFORM_ANDROID | PLATFORM_IOS
+4.;
+#else
+3.;
+#endif
 
 constexpr float FRAME_TIME = 0.1f;
 

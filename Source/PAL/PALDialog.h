@@ -57,12 +57,18 @@ public:
 
 	bool IsDialog() const;
 
+	bool IsScrollToEnd() const;
+
+	void ScrollToEnd();
+
 private:
 	FString DisplayText(UPALDialog* Dialog, const FString& TextString);
 
 protected:
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 
 	virtual void NativeConstruct() override;
-	
+
 };

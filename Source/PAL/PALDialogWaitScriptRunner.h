@@ -24,6 +24,8 @@ private:
 public:
 	void Init(UPALDialog* Dialog);
 
+	void OnSearch();
+
 	void Clear();
 
 protected:
