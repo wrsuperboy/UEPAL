@@ -26,8 +26,6 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	UMaterialInstanceDynamic* DynamicMaterial;
 
-	bool bChangedSprite;
-
 	SIZE_T CurrentFrameNum;
 
 	FVector3d LocationOffset;
@@ -46,4 +44,6 @@ public:
 
 	void SetLayer(int16 InLayer);
 
+private:
+	void UpdateFrame();
 };

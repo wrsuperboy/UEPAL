@@ -5,7 +5,7 @@
 #include "PAL.h"
 
 UPALSpriteMeshComponent::UPALSpriteMeshComponent(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer), Sprite(nullptr), bChangedSprite(false), LocationOffset(FVector3d::Zero()), Layer(0), bChangedLayer(false)
+	: Super(ObjectInitializer), Sprite(nullptr), LocationOffset(FVector3d::Zero()), Layer(0), bChangedLayer(false)
 {
 	static ConstructorHelpers::FObjectFinder<UMaterial> MaskMaterialRef(TEXT("Material'/Game/PAL_M_Character.PAL_M_Character'"));
 	DynamicMaterial = UMaterialInstanceDynamic::Create(MaskMaterialRef.Object, nullptr);
@@ -67,16 +67,16 @@ void UPALSpriteMeshComponent::SetSprite(UPALSprite* NewSprite)
 		CreateMeshSection(FrameNum, Vertices, Triangles, TArray<FVector>(), UV0, TArray<FColor>(), TArray<FProcMeshTangent>(), false);
 		SetMeshSectionVisible(FrameNum, false);
 	}
-	if (CurrentFrameNum < FrameCount)
+	if (CurrentFrameNum >= FrameCount)
 	{
-		SetMeshSectionVisible(CurrentFrameNum, false);
+		CurrentFrameNum = 0;
 	}
-	bChangedSprite = true;
+	UpdateFrame();
 }
 
 void UPALSpriteMeshComponent::SetFrame(SIZE_T FrameNum)
 {
-	if (!bChangedSprite && FrameNum == CurrentFrameNum)
+	if (FrameNum == CurrentFrameNum)
 	{
 		return;
 	}
@@ -86,37 +86,9 @@ void UPALSpriteMeshComponent::SetFrame(SIZE_T FrameNum)
 		return;
 	}
 
-	bChangedSprite = false;
 	SetMeshSectionVisible(CurrentFrameNum, false);
 	CurrentFrameNum = FrameNum;
-
-	SetMeshSectionVisible(FrameNum, true);
-	UTexture2D* Texture = Sprite->GetFrame(FrameNum);
-	DynamicMaterial->SetTextureParameterValue(FName("PAL_Texture2D"), Texture);
-	SetMaterial(FrameNum, DynamicMaterial);
-
-	if (Layer >= 0)
-	{
-		if (bChangedLayer)
-		{
-			SetRelativeRotation(FRotator(0., 0., 90.));
-		}
-		SetRelativeScale3D(FVector3d(PIXEL_TO_UNIT, 2 / SQRT_3 * PIXEL_TO_UNIT, 1.));
-		SetRelativeLocation(LocationOffset + FVector3d(- Texture->GetSizeX() * PIXEL_TO_UNIT / 2., Layer * SQRT_3 * PIXEL_TO_UNIT, Texture->GetSizeY() * 2 / SQRT_3 * PIXEL_TO_UNIT + Layer * PIXEL_TO_UNIT));
-	}
-	else
-	{
-		double Roll = (Layer > -10) ? (9. * Layer) : (- 90 - 1. / Layer);
-		if (bChangedLayer)
-		{
-			SetRelativeRotation(FRotator(0., 0., 90. + Roll));
-		}
-		double Sin = FMath::Sin(FMath::DegreesToRadians(60. - Roll));
-		SetRelativeScale3D(FVector3d(PIXEL_TO_UNIT, 1. / Sin * PIXEL_TO_UNIT, 1.));
-		SetRelativeLocation(LocationOffset + FVector3d(- Texture->GetSizeX() * PIXEL_TO_UNIT / 2., - Texture->GetSizeY() / Sin * FMath::Cos(FMath::DegreesToRadians(90. + Roll)) * PIXEL_TO_UNIT, Texture->GetSizeY() / Sin * FMath::Sin(FMath::DegreesToRadians(90. + Roll)) * PIXEL_TO_UNIT));
-	}
-
-	bChangedLayer = false;
+	UpdateFrame();
 }
 
 void UPALSpriteMeshComponent::SetLayer(int16 InLayer)
@@ -126,4 +98,40 @@ void UPALSpriteMeshComponent::SetLayer(int16 InLayer)
 		Layer = InLayer;
 		bChangedLayer = true;
 	}
+}
+
+void UPALSpriteMeshComponent::UpdateFrame()
+{
+	if (Sprite == nullptr || Sprite->GetFrameCount() <= CurrentFrameNum)
+	{
+		return;
+	}
+
+	SetMeshSectionVisible(CurrentFrameNum, true);
+	UTexture2D* Texture = Sprite->GetFrame(CurrentFrameNum);
+	DynamicMaterial->SetTextureParameterValue(FName("PAL_Texture2D"), Texture);
+	SetMaterial(CurrentFrameNum, DynamicMaterial);
+
+	if (Layer >= 0)
+	{
+		if (bChangedLayer)
+		{
+			SetRelativeRotation(FRotator(0., 0., 90.));
+		}
+		SetRelativeScale3D(FVector3d(PIXEL_TO_UNIT, 2 / SQRT_3 * PIXEL_TO_UNIT, 1.));
+		SetRelativeLocation(LocationOffset + FVector3d(-Texture->GetSizeX() * PIXEL_TO_UNIT / 2., Layer * SQRT_3 * PIXEL_TO_UNIT, Texture->GetSizeY() * 2 / SQRT_3 * PIXEL_TO_UNIT + Layer * PIXEL_TO_UNIT));
+	}
+	else
+	{
+		double Roll = (Layer > -10) ? (9. * Layer) : (-90 - 1. / Layer);
+		if (bChangedLayer)
+		{
+			SetRelativeRotation(FRotator(0., 0., 90. + Roll));
+		}
+		double Sin = FMath::Sin(FMath::DegreesToRadians(60. - Roll));
+		SetRelativeScale3D(FVector3d(PIXEL_TO_UNIT, 1. / Sin * PIXEL_TO_UNIT, 1.));
+		SetRelativeLocation(LocationOffset + FVector3d(-Texture->GetSizeX() * PIXEL_TO_UNIT / 2., -Texture->GetSizeY() / Sin * FMath::Cos(FMath::DegreesToRadians(90. + Roll)) * PIXEL_TO_UNIT, Texture->GetSizeY() / Sin * FMath::Sin(FMath::DegreesToRadians(90. + Roll)) * PIXEL_TO_UNIT));
+	}
+
+	bChangedLayer = false;
 }
