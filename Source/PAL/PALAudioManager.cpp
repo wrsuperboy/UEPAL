@@ -5,6 +5,7 @@
 #include "AudioDevice.h"
 #include "Audio/ActorSoundParameterInterface.h"
 #include "Sound/SoundWaveProcedural.h"
+#include "PALGameInstance.h"
 #include "PALWaveSound.h"
 #include "PALVocSound.h"
 #include "PALCommon.h"
@@ -146,9 +147,22 @@ void UPALAudioManager::EnableSound(bool bEnabled)
 	bIsSoundEnabled = bEnabled;
 }
 
+bool UPALAudioManager::ShouldCreateSubsystem(UObject* Outer) const
+{
+	if (!Super::ShouldCreateSubsystem(Outer))
+	{
+		return false;
+	}
+
+	UWorld* World = Cast<UWorld>(Outer);
+	return World && World->IsGameWorld();
+}
+
 void UPALAudioManager::Initialize(FSubsystemCollectionBase& Collection)
 {
 	MusicProcedural = NewObject<UPALMusicProcedural>(GetWorld());
+	FString MusicMKFPath = GetWorld()->GetGameInstance<UPALGameInstance>()->GetGameResourcePath();
+	MusicMKFPath.Append("Mus.mkf");
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 	IFileHandle* MusicFileHanlde = PlatformFile.OpenRead(*MusicMKFPath);
 	MusicProcedural->Load(MusicFileHanlde);

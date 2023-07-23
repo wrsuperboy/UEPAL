@@ -31,15 +31,16 @@ enum EPALSoundFormat : uint8
 /**
  * 
  */
-UCLASS(Config = Game)
+UCLASS()
 class PAL_API UPALCommon : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
+	friend class UPALGameInstance;
+
 	friend class UPALSprite;
 
 private:
-	UPROPERTY(Config)
 	FString GameResourcePath;
 
 	UPROPERTY()
@@ -105,6 +106,8 @@ private:
 
 	UTexture2D* CreateTextureFromRLE(const uint8* const RLE);
 
+	void Init(const FString& InGameResourcePath);
+
 	void SolveDistribution();
 
 	void LoadDefaultPalette();
@@ -122,8 +125,5 @@ private:
 	void InitText();
 
 	void SolveSoundFormat();
-
-public:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 };

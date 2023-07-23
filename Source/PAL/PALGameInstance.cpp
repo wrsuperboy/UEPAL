@@ -21,6 +21,20 @@ UPALGameStateData* UPALGameInstance::GetGameStateData() const
 	return GameStateData;
 }
 
+void UPALGameInstance::SetGameResourcePath(const FString& InGameResourcePath)
+{
+	GameResourcePath = InGameResourcePath;
+	if (!GameResourcePath.IsEmpty() && !GameResourcePath.EndsWith(FGenericPlatformMisc::GetDefaultPathSeparator()))
+	{
+		GameResourcePath.Append(FGenericPlatformMisc::GetDefaultPathSeparator());
+	}
+}
+
+FString UPALGameInstance::GetGameResourcePath() const
+{
+	return GameResourcePath;
+}
+
 void UPALGameInstance::SetGameStateData(UPALGameStateData* NewGameStateData)
 {
 	GameStateData = NewGameStateData;
@@ -73,11 +87,6 @@ void UPALGameInstance::SetMainPlayerByUniqueId(const FUniqueNetIdRepl& UniqueId)
 
 void UPALGameInstance::InitGameData()
 {
+	GetSubsystem<UPALCommon>()->Init(GameResourcePath);
 	GameData = GetSubsystem<UPALCommon>()->LoadGameData();
-}
-
-void UPALGameInstance::Init()
-{
-	Super::Init();
-	InitGameData();
 }

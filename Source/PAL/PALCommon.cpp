@@ -515,6 +515,17 @@ UTexture2D* UPALCommon::CreateTextureFromRLE(const uint8* const RLE)
 	return NewTexture;
 }
 
+void UPALCommon::Init(const FString& InGameResourcePath)
+{
+	verify(FGenericPlatformProperties::IsLittleEndian());
+	GameResourcePath = InGameResourcePath;
+	SolveDistribution();
+	LoadDefaultPalette();
+	InitText();
+	UniFont = LoadObject<UFont>(nullptr, TEXT("/Script/Engine.Font'/Game/unifont_Font.unifont_Font'"));
+	SolveSoundFormat();
+}
+
 void UPALCommon::SolveDistribution()
 {
 	GameDistribution = EGameDistribution::Win95;
@@ -953,18 +964,4 @@ void UPALCommon::SolveSoundFormat()
 		FString FileFullPath = FString(GameResourcePath).Append("VOC.mkf");
 		SoundFormat = PlatformFile.FileExists(*FileFullPath) ? EPALSoundFormat::VOC : EPALSoundFormat::WAVE;
 	}
-}
-
-void UPALCommon::Initialize(FSubsystemCollectionBase& Collection)
-{
-	verify(FGenericPlatformProperties::IsLittleEndian());
-	if (!GameResourcePath.IsEmpty() && !GameResourcePath.EndsWith(FGenericPlatformMisc::GetDefaultPathSeparator()))
-	{
-		GameResourcePath.Append(FGenericPlatformMisc::GetDefaultPathSeparator());
-	}
-	SolveDistribution();
-	LoadDefaultPalette();
-	InitText();
-	UniFont = LoadObject<UFont>(nullptr, TEXT("/Script/Engine.Font'/Game/unifont_Font.unifont_Font'"));
-	SolveSoundFormat();
 }

@@ -17,7 +17,7 @@ TSharedRef<SWidget> UPALMenuBase::RebuildWidget()
 	if (!GetRootWidget())
 	{
 		WidgetTree->RootWidget = 
-			WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("SafeScreen"));;
+			WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("SafeScreen"));
 	}
 
 	return Super::RebuildWidget();

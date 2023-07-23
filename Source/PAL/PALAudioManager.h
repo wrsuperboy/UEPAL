@@ -11,7 +11,7 @@
 /**
  * 
  */
-UCLASS(Config = Game)
+UCLASS()
 class PAL_API UPALAudioManager : public UWorldSubsystem
 {
 	GENERATED_BODY()
@@ -25,9 +25,6 @@ private:
 
 	bool bIsSoundEnabled;
 
-	UPROPERTY(Config)
-	FString MusicMKFPath;
-
 public:
 	void PlayMusic(SIZE_T MusicNum, bool bLoop, float FadeTime);
 
@@ -40,6 +37,8 @@ public:
 	void EnableSound(bool bEnabled);
 
 public:
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
+
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 	virtual void Deinitialize() override;

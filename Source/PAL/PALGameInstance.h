@@ -24,6 +24,8 @@ public:
 private:
 	EGameDistribution GameDistribution;
 
+	FString GameResourcePath;
+
 	UPROPERTY(VisibleAnywhere)
 	UPALGameData* GameData;
 
@@ -37,28 +39,27 @@ private:
 	FUniqueNetIdRepl MainPlayerUniqueId;
 
 public:
-	EGameDistribution GetGameDistribution() const;
+	void SetGameResourcePath(const FString& InGameResourcePath);
+
+	FString GetGameResourcePath() const;
+
+	void InitGameData();
 
 	UPALGameData* GetGameData() const;
-
-	UPALGameStateData* GetGameStateData() const;
-
-	void SetGameStateData(UPALGameStateData* NewGameStateData);
 
 	UPALPlayerStateData* GetMainPlayerStateData() const;
 
 	void SetMainPlayerStateData(UPALPlayerStateData* NewMainPlayerStateData);
+
+	void SetGameStateData(UPALGameStateData* NewGameStateData);
+
+	EGameDistribution GetGameDistribution() const;
+
+	UPALGameStateData* GetGameStateData() const;
 
 	ULocalPlayer* GetMainPlayer() const;
 
 	bool IsMainPlayerSet() const;
 
 	void SetMainPlayerByUniqueId(const FUniqueNetIdRepl& PlayerId);
-
-private:
-	void InitGameData();
-
-public:
-	virtual void Init() override;
-
 };
