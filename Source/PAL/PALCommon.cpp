@@ -412,6 +412,24 @@ EPALSoundFormat UPALCommon::GetSoundFormat() const
 	return SoundFormat;
 }
 
+UPALSprite* UPALCommon::GetBattleRoleSprite(const SIZE_T BattleRoleSpriteNum)
+{
+	UPALMKF* MKF = LoadMKF(FString(TEXT("F")));
+	SIZE_T Size = MKF->GetDecompressedSize(BattleRoleSpriteNum);
+	uint8* Buffer = (uint8*)FMemory::Malloc(Size);
+	MKF->DecompressChunk(Buffer, Size, BattleRoleSpriteNum);
+	return UPALSprite::Create(Buffer, this);
+}
+
+UPALSprite* UPALCommon::GetBattleEnemySprite(const SIZE_T BattleEnemySpriteNum)
+{
+	UPALMKF* MKF = LoadMKF(FString(TEXT("ABC")));
+	SIZE_T Size = MKF->GetDecompressedSize(BattleEnemySpriteNum);
+	uint8* Buffer = (uint8*)FMemory::Malloc(Size);
+	MKF->DecompressChunk(Buffer, Size, BattleEnemySpriteNum);
+	return UPALSprite::Create(Buffer, this);
+}
+
 UPALMKF* UPALCommon::LoadMKF(const FString& FileName) const
 {
 	FString FileFullPath = FString(GameResourcePath).Append(FileName).Append(".mkf");

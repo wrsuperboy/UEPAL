@@ -100,7 +100,7 @@ void UPALConfigMenu::NativeConstruct()
 	UHorizontalBox* GameResourcePathSelectionBox = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
 	Grid->AddChildToGrid(GameResourcePathSelectionBox, 0, 1);
 	GameResourcePathText = WidgetTree->ConstructWidget<UEditableText>(UEditableText::StaticClass());
-	GameResourcePathText->SetText(FText::FromString("X:\\yyy\\PAL98"));
+	GameResourcePathText->SetText(FText::FromString("C:\\Users\\wwrus\\Desktop\\PAL98"));
 	UHorizontalBoxSlot* GameResourcePathTextSlot = GameResourcePathSelectionBox->AddChildToHorizontalBox(GameResourcePathText);
 	GameResourcePathTextSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 	UButton* GameResourcePathSelectionButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());

@@ -111,7 +111,7 @@ void UPALItemSelectMenu::InitInternal()
 
 	TArray<FInventoryItem> Inventory(PlayerStatePrivate->GetPlayerStateData()->Inventory);
 	// Also add usable equipped items to the list
-	if ((ItemFlags & EPALItemFlag::ItemFlagUsable) && !GetWorld()->GetGameState<APALGameState>()->GetGameStateData()->bInBattle)
+	if ((ItemFlags & EPALItemFlag::ItemFlagUsable) && !PlayerStatePrivate->GetPlayerStateData()->bInBattle)
 	{
 		Inventory.Append(PlayerStatePrivate->GetUseableEquippedItems());
 	}

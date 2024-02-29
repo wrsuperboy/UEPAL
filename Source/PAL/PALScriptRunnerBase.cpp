@@ -55,8 +55,8 @@ void APALScriptRunnerBase::BeginPlay()
 	// could be a scene game mode or a battle game mode
 	GameMode = GetWorld()->GetAuthGameMode<APALGameModeBase>();
 	GameStateData = GetWorld()->GetGameState<APALGameState>()->GetGameStateData();
-	PlayerController = Cast<APALPlayerController>(GetWorld()->GetGameInstance<UPALGameInstance>()
-		->GetMainPlayer()->GetPlayerController(nullptr));
+	PlayerController = GetWorld()->GetGameInstance<UPALGameInstance>()->GetMainPlayer()->GetPlayerController(nullptr);
+	ScenePlayerController = Cast<APALScenePlayerController>(PlayerController);
 	PlayerStateData = PlayerController->GetPlayerState<APALPlayerState>()->GetPlayerStateData();
 }
 

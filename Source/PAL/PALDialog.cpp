@@ -247,7 +247,7 @@ void UPALDialog::ShowText(const FString& TextString)
 		Text->SetText(FText::FromString(DisplayText(this, TextString)));
 		if (!IsInViewport())
 		{
-			AddToViewport(0);
+			AddToPlayerScreen();
 		}
 		FTimerHandle TimerHandle;
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UPALDialog::RemoveFromParent, 1.4, false);
@@ -275,7 +275,7 @@ void UPALDialog::ShowText(const FString& TextString)
 		}
 		if (!IsInViewport())
 		{
-			AddToViewport(0);
+			AddToPlayerScreen();
 		}
 	}
 }

@@ -115,12 +115,15 @@ UPALPlayerStateData* APALPlayerState::LoadDefaultGame() const
 	FMemory::Memzero(Data->RoleStatus, sizeof(Data->RoleStatus));
 	Data->bAutoBattle = false;
 	Data->CurrentEquipPart = -1;
-	Data->CurrentMainMenuItemNum = 0;
-	Data->CurrentSystemMenuItemNum = 0;
 
 	// Add one default here for the scripts to run
 	Data->Party.Add(NewObject<UPALRoleData>());
 	Data->LastPartyRoleId[0] = 0;
+
+	Data->bInBattle = false;
+	Data->bHasTriggerScriptToRun = false;
+	Data->BattleMusicNum = 0;
+	Data->BattleFieldNum = 0;
 	return Data;
 }
 
@@ -181,12 +184,14 @@ UPALPlayerStateData* APALPlayerState::LoadSavedGame(SIZE_T SaveSlot)
 	FMemory::Memzero(Data->EquipmentEffects, sizeof(Data->EquipmentEffects));
 	Data->bAutoBattle = false;
 	Data->CurrentEquipPart = -1;
-	Data->CurrentMainMenuItemNum = 0;
-	Data->CurrentSystemMenuItemNum = 0;
 	for (SIZE_T i = 0; i < MAX_INVENTORY; i++)
 	{
 		Data->LastPartyRoleId[i] = s->Party[i].PlayerRole;
 	}
+	Data->bInBattle = false;
+	Data->bHasTriggerScriptToRun = false;
+	Data->BattleMusicNum = s->NumBattleMusic;
+	Data->BattleFieldNum = s->NumBattleField;
 	FMemory::Free(s);
 	return Data;
 }
@@ -203,7 +208,7 @@ void APALPlayerState::RemoveEquipmentEffect(const SIZE_T RoleId, const EPALBodyP
 	if (EquipPart == EPALBodyPart::Hand)
 	{
 		// reset the dual attack status
-		PlayerStateData->RoleStatus[RoleId][EPALRoleStatus::DualAttack] = 0;
+		PlayerStateData->RoleStatus[RoleId][EPALStatus::DualAttack] = 0;
 	}
 	else if (EquipPart == EPALBodyPart::Wear)
 	{
@@ -427,7 +432,7 @@ void APALPlayerState::AddPoisonForRole(const SIZE_T RoleId, const uint16 PoisonI
 	}
 }
 
-void APALPlayerState::CurePoisonByKind(const SIZE_T RoleId, const uint16 PoisonId)
+void APALPlayerState::CurePoisonForRoleByKind(const SIZE_T RoleId, const uint16 PoisonId)
 {
 	SIZE_T Index = 0;
 	while (Index < PlayerStateData->Party.Num())
@@ -454,7 +459,7 @@ void APALPlayerState::CurePoisonByKind(const SIZE_T RoleId, const uint16 PoisonI
 	}
 }
 
-void APALPlayerState::CurePoisonByLevel(const SIZE_T RoleId, const uint16 MaxLevel)
+void APALPlayerState::CurePoisonForRoleByLevel(const SIZE_T RoleId, const uint16 MaxLevel)
 {
 	SIZE_T Index = 0;
 	while (Index < PlayerStateData->Party.Num())
@@ -681,7 +686,7 @@ uint16 APALPlayerState::GetRoleElementalResistance(const SIZE_T RoleId, SIZE_T A
 	return w;
 }
 
-void APALPlayerState::SetRoleStatus(const SIZE_T RoleId, const EPALRoleStatus Status, const uint16 RoundNum)
+void APALPlayerState::SetRoleStatus(const SIZE_T RoleId, const EPALStatus Status, const uint16 RoundNum)
 {
 	switch (Status)
 	{
@@ -723,7 +728,7 @@ void APALPlayerState::SetRoleStatus(const SIZE_T RoleId, const EPALRoleStatus St
 	}
 }
 
-void APALPlayerState::RemoveRoleStatus(const SIZE_T RoleId, const EPALRoleStatus Status)
+void APALPlayerState::RemoveRoleStatus(const SIZE_T RoleId, const EPALStatus Status)
 {
 	// Don't remove effects of equipments
 	if (PlayerStateData->RoleStatus[RoleId][Status] <= 999)
@@ -732,7 +737,7 @@ void APALPlayerState::RemoveRoleStatus(const SIZE_T RoleId, const EPALRoleStatus
 	}
 }
 
-bool APALPlayerState::IsRoleInStatus(const SIZE_T RoleId, const EPALRoleStatus Status)
+bool APALPlayerState::IsRoleInStatus(const SIZE_T RoleId, const EPALStatus Status)
 {
 	return PlayerStateData->RoleStatus[RoleId][Status] > 0;
 }
@@ -741,7 +746,7 @@ void APALPlayerState::ClearAllRoleStatus()
 {
 	for (SIZE_T i = 0; i < MAX_PLAYER_ROLES; i++)
 	{
-		for (SIZE_T j = 0; j < EPALRoleStatus::_RoleStatusCount; j++)
+		for (SIZE_T j = 0; j < EPALStatus::_StatusCount; j++)
 		{
 			// Don't remove effects of equipments
 			if (PlayerStateData->RoleStatus[i][j] <= 999)
@@ -929,10 +934,10 @@ bool APALPlayerState::Revive(const SIZE_T RoleId, double HPRatio)
 		PlayerStateData->PlayerRoles.HP[RoleId] =
 			FMath::CeilToInt(PlayerStateData->PlayerRoles.MaxHP[RoleId] * HPRatio);
 
-		CurePoisonByLevel(RoleId, 3);
-		for (SIZE_T x = 0; x < EPALRoleStatus::_RoleStatusCount; x++)
+		CurePoisonForRoleByLevel(RoleId, 3);
+		for (SIZE_T x = 0; x < EPALStatus::_StatusCount; x++)
 		{
-			RemoveRoleStatus(RoleId, static_cast<EPALRoleStatus>(x));
+			RemoveRoleStatus(RoleId, static_cast<EPALStatus>(x));
 		}
 		bRevived = true;
 	}
@@ -951,4 +956,159 @@ bool APALPlayerState::ReviveAll(double HPRatio)
 		}
 	}
 	return bRevived;
+}
+
+void APALPlayerState::StartBattle(const SIZE_T EnemyTeamNum, const bool bIsBoss)
+{
+	// Make sure everyone in the party is alive, also clear all hidden EXP count records
+	for (UPALRoleData* PartyMember : PlayerStateData->Party)
+	{
+		SIZE_T RoleId = PartyMember->RoleId;
+		if (PlayerStateData->PlayerRoles.HP[RoleId] == 0)
+		{
+			PlayerStateData->PlayerRoles.HP[RoleId] = 1;
+			PlayerStateData->RoleStatus[RoleId][EPALStatus::Puppet] = 0;
+		}
+		PlayerStateData->ExpAll.HealthExp[RoleId].Count = 0;
+		PlayerStateData->ExpAll.MagicExp[RoleId].Count = 0;
+		PlayerStateData->ExpAll.AttackExp[RoleId].Count = 0;
+		PlayerStateData->ExpAll.MagicPowerExp[RoleId].Count = 0;
+		PlayerStateData->ExpAll.DefenseExp[RoleId].Count = 0;
+		PlayerStateData->ExpAll.DexterityExp[RoleId].Count = 0;
+		PlayerStateData->ExpAll.FleeExp[RoleId].Count = 0;
+	}
+
+	for (FInventoryItem& IventoryItem : PlayerStateData->Inventory)
+	{
+		IventoryItem.InUseAmount = 0;
+	}
+
+	PlayerStateData->CurrentEnemies.Empty();
+	UPALGameData* GameData = GetGameInstance<UPALGameInstance>()->GetGameData();
+	UPALGameStateData* GameStateData = GetWorld()->GetGameState<APALGameState>()->GetGameStateData();
+	for (SIZE_T i = 0; i < MAX_ENEMIES_IN_TEAM; i++)
+	{
+		uint16 ObjectId = GameData->EnemyTeams[EnemyTeamNum].Enemy[i];
+		if (ObjectId == 0xFFFF)
+		{
+			break;
+		}
+
+		if (ObjectId != 0)
+		{
+			UPALBattleEnemyData* Enemy = NewObject<UPALBattleEnemyData>();
+			Enemy->Init(ObjectId, GameData->Enemies[GameStateData->Objects[ObjectId].Enemy.EnemyID]);
+			Enemy->ScriptOnTurnStart = GameStateData->Objects[ObjectId].Enemy.ScriptOnTurnStart;
+			Enemy->ScriptOnBattleEnd = GameStateData->Objects[ObjectId].Enemy.ScriptOnBattleEnd;
+			Enemy->ScriptOnReady = GameStateData->Objects[ObjectId].Enemy.ScriptOnReady;
+			PlayerStateData->CurrentEnemies.Add(Enemy);
+		}
+	}
+	PlayerStateData->bCurrentEnemyIsBoss = bIsBoss;
+
+	UpdateEquipments();
+	PlayerStateData->ExpGainedInBattle = 0;
+	PlayerStateData->CashGainedInBattle = 0;
+	PlayerStateData->bBattleHiding = false;
+}
+
+SIZE_T APALPlayerState::GetRoleBattleSpriteNum(const SIZE_T RoleId)
+{
+	SIZE_T BattleSpriteNum = PlayerStateData->PlayerRoles.SpriteNumInBattle[RoleId];
+
+	for (SIZE_T i = 0; i <= MAX_PLAYER_EQUIPMENTS; i++)
+	{
+		if (PlayerStateData->EquipmentEffects[i].SpriteNumInBattle[RoleId] != 0)
+		{
+			BattleSpriteNum = PlayerStateData->EquipmentEffects[i].SpriteNumInBattle[RoleId];
+		}
+	}
+
+	return BattleSpriteNum;
+}
+
+void APALPlayerState::DamageEnemy(const SIZE_T EnemyIndex, const int32 Damage)
+{
+	PlayerStateData->CurrentEnemies[EnemyIndex]->Enemy.Health -= Damage;
+}
+
+void APALPlayerState::DamageAllEnemies(const int32 Damage)
+{
+	for (UPALBattleEnemyData* EnemyData : PlayerStateData->CurrentEnemies)
+	{
+		EnemyData->Enemy.Health -= Damage;
+	}
+}
+
+void APALPlayerState::AddPoisonForEnemy(const SIZE_T EnemyIndex, const int16 PoisonId)
+{
+	UPALGameStateData* GameStateData = GetWorld()->GetGameState<APALGameState>()->GetGameStateData();
+	UPALBattleEnemyData* EnemyData = PlayerStateData->CurrentEnemies[EnemyIndex];
+	uint16 ObjectId = EnemyData->GetObjectId();
+	SIZE_T j;
+	for (j = 0; j < MAX_POISONS; j++)
+	{
+		if (EnemyData->PoisonStatus[j].PoisonID == PoisonId)
+		{
+			break;
+		}
+	}
+
+	if (j >= MAX_POISONS)
+	{
+		for (j = 0; j < MAX_POISONS; j++)
+		{
+			if (EnemyData->PoisonStatus[j].PoisonID == 0)
+			{
+				EnemyData->PoisonStatus[j].PoisonID = PoisonId;
+				uint16 Script = GameStateData->Objects[PoisonId].Poison.EnemyScript;
+				GetWorld()->GetSubsystem<UPALScriptManager>()->RunTriggerScript(Script, EnemyIndex, true);
+				EnemyData->PoisonStatus[j].PoisonScript = Script;
+				break;
+			}
+		}
+	}
+}
+
+void APALPlayerState::CurePoisonForEnemyByKind(const SIZE_T EnemyIndex, const uint16 PoisonId)
+{
+	UPALBattleEnemyData* EnemyData = PlayerStateData->CurrentEnemies[EnemyIndex];
+	for (SIZE_T j = 0; j < MAX_POISONS; j++)
+	{
+		if (EnemyData->PoisonStatus[j].PoisonID == PoisonId)
+		{
+			EnemyData->PoisonStatus[j].PoisonID = 0;
+			EnemyData->PoisonStatus[j].PoisonScript = 0;
+			break;
+		}
+	}
+}
+
+bool APALPlayerState::IsRoleDying(const SIZE_T RoleId)
+{
+	return PlayerStateData->PlayerRoles.HP[RoleId] < FMath::Min(100, PlayerStateData->PlayerRoles.MaxHP[RoleId] / 5);
+}
+
+uint16 APALPlayerState::GetEnemyDexterity(const SIZE_T EnemyIndex)
+{
+	check(PlayerStateData->CurrentEnemies[EnemyIndex]->GetObjectId() != 0);
+	uint16 s = (PlayerStateData->CurrentEnemies[EnemyIndex]->Enemy.Level + 6) * 3;
+	s += PlayerStateData->CurrentEnemies[EnemyIndex]->Enemy.Dexterity;
+	return s;
+}
+
+uint16 APALPlayerState::GetRoleActualDexterity(const SIZE_T RoleId)
+{
+	uint16 Dexterity = GetRoleDexterity(RoleId);
+
+	if (PlayerStateData->RoleStatus[RoleId][EPALStatus::Haste] != 0)
+	{
+		Dexterity *= 3;
+	}
+
+	if (Dexterity > 999)
+	{
+		Dexterity = 999;
+	}
+	return Dexterity;
 }

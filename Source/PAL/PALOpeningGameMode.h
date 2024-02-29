@@ -15,6 +15,9 @@ class PAL_API APALOpeningGameMode : public APALGameModeBase
 	GENERATED_BODY()
 
 public:
+	APALOpeningGameMode();
+
+public:
 	void StartMainGame(SIZE_T SaveSlotNum);
 
 public:

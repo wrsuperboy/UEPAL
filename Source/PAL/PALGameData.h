@@ -318,8 +318,8 @@ struct FInventoryItem
 
 struct FPoisonStatus
 {
-	int16 PoisonID;       // kind of the poison
-	int16 PoisonScript;   // script entry
+	uint16 PoisonID;       // kind of the poison
+	uint16 PoisonScript;   // script entry
 };
 
 struct FExperience
@@ -355,7 +355,7 @@ enum EPALBodyPart : uint16
 	_BodyPartCount
 };
 
-enum EPALRoleStatus : uint16
+enum EPALStatus : uint16
 {
 	Confused,  // attack friends randomly
 	Paralyzed,     // paralyzed
@@ -366,7 +366,18 @@ enum EPALRoleStatus : uint16
 	Protect,       // more defense value
 	Haste,         // faster
 	DualAttack,    // dual attack
-	_RoleStatusCount
+	_StatusCount
+};
+
+enum EPALBattleResult : uint16
+{
+	BattleResultWon = 3,      // player won the battle
+	BattleResultLost = 1,      // player lost the battle
+	BattleResultFleed = 0xFFFF, // player fleed from the battle
+	BattleResultTerminated = 0,      // battle terminated with scripts
+	BattleResultOnGoing = 1000,   // the battle is ongoing
+	BattleResultPreBattle = 1001,   // running pre-battle scripts
+	BattleResultPause = 1002,   // battle pause
 };
 
 enum EPALItemFlag : uint16

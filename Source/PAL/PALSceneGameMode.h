@@ -6,19 +6,9 @@
 #include "PALGameModeBase.h"
 #include "PALRolePawn.h"
 #include "PALPlayerState.h"
-#include "PALPlayerController.h"
+#include "PALScenePlayerController.h"
 #include "PALSceneGameMode.generated.h"
 
-enum EPALBattleResult : uint8
-{
-	Won,
-	Lost,
-	Fleed,
-	Terminated,
-	OnGoing,
-	PreBattle,
-	Pause
-};	
 /**
  * 
  */
@@ -38,7 +28,7 @@ private:
 	bool bLoadRoleSprites;
 
 	UPROPERTY(VisibleAnywhere)
-	APALPlayerController* MainPlayerControllerPrivate;
+	APALScenePlayerController* MainPlayerControllerPrivate;
 
 	UPROPERTY(VisibleAnywhere)
 	APALPlayerState* MainPlayerStatePrivate;
@@ -62,7 +52,7 @@ public:
 
 	void SaveGame(const SIZE_T SaveSlot);
 
-	EPALBattleResult StartBattle(const SIZE_T EnenyTeam, const bool bIsBoss);
+	EPALBattleResult StartBattle(const SIZE_T EnenyTeamNum, const bool bIsBoss);
 
 	void SetLight(SIZE_T PaletteNum, bool bNightPalette);
 

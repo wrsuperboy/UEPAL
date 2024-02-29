@@ -1,7 +1,7 @@
 // Copyright (C) 2022 Meizhouxuanhan.
 
 
-#include "PALPlayerController.h"
+#include "PALScenePlayerController.h"
 #include "PALPlayerCameraManager.h"
 #include "PALPlayerState.h"
 #include "PALPlayerStateData.h"
@@ -20,12 +20,12 @@
 #include "PALBuyMenu.h"
 #include "PAL.h"
 
-APALPlayerController::APALPlayerController() : Super() {
+APALScenePlayerController::APALScenePlayerController() : Super() {
 	PlayerCameraManagerClass = APALPlayerCameraManager::StaticClass();
 	bAutoManageActiveCameraTarget = false;
 }
 
-void APALPlayerController::ReloadRoles()
+void APALScenePlayerController::ReloadRoles()
 {
 	for (APALRolePawn* RolePawn : RolePawns) {
 		RolePawn->SetActorTickEnabled(false);
@@ -63,7 +63,7 @@ void APALPlayerController::ReloadRoles()
 	}
 }
 
-void APALPlayerController::ReloadRoleSprites()
+void APALScenePlayerController::ReloadRoleSprites()
 {
 	for (APALRolePawn* RolePawn : RolePawns)
 	{
@@ -71,7 +71,7 @@ void APALPlayerController::ReloadRoleSprites()
 	}
 }
 
-APALRolePawn* APALPlayerController::GetRolePawn(const SIZE_T RoleId) const
+APALRolePawn* APALScenePlayerController::GetRolePawn(const SIZE_T RoleId) const
 {
 	for (APALRolePawn* RolePawn : RolePawns)
 	{
@@ -84,13 +84,13 @@ APALRolePawn* APALPlayerController::GetRolePawn(const SIZE_T RoleId) const
 	return nullptr;
 }
 
-const FPALPosition3d& APALPlayerController::GetPartyPosition() const
+const FPALPosition3d& APALScenePlayerController::GetPartyPosition() const
 {
 	check(!RolePawns.IsEmpty());
 	return RolePawns[0]->GetPosition();
 }
 
-FPALPosition3d APALPlayerController::GetViewport() const
+FPALPosition3d APALScenePlayerController::GetViewport() const
 {
 	AActor* ViewTarget = GetViewTarget();
 	if (ViewTarget != CameraActor)
@@ -102,7 +102,7 @@ FPALPosition3d APALPlayerController::GetViewport() const
 	return GetPartyPosition();
 }
 
-void APALPlayerController::ControllByGame()
+void APALScenePlayerController::ControllByGame()
 {
 	if (GetPawn())
 	{
@@ -110,7 +110,7 @@ void APALPlayerController::ControllByGame()
 	}
 }
 
-void APALPlayerController::ReleaseControllFromGame()
+void APALScenePlayerController::ReleaseControllFromGame()
 {
 	if (GetPawn())
 	{
@@ -118,7 +118,7 @@ void APALPlayerController::ReleaseControllFromGame()
 	}
 }
 
-bool APALPlayerController::IsControlledByGame() const
+bool APALScenePlayerController::IsControlledByGame() const
 {
 	if (RolePawns.IsEmpty())
 	{
@@ -128,7 +128,7 @@ bool APALPlayerController::IsControlledByGame() const
 	return !RolePawns[0]->IsInputEnabled();
 }
 
-void APALPlayerController::RemoveAllPartyRoles()
+void APALScenePlayerController::RemoveAllPartyRoles()
 {
 	for (TArray<APALRolePawn*>::TIterator It = RolePawns.CreateIterator(); It; ++It)
 	{
@@ -143,7 +143,7 @@ void APALPlayerController::RemoveAllPartyRoles()
 	PlayerStateData->Party.Empty();
 }
 
-void APALPlayerController::RemoveAllFollowerRoles()
+void APALScenePlayerController::RemoveAllFollowerRoles()
 {
 	for (TArray<APALRolePawn*>::TIterator It = RolePawns.CreateIterator(); It; ++It)
 	{
@@ -158,7 +158,7 @@ void APALPlayerController::RemoveAllFollowerRoles()
 	PlayerStateData->Follow.Empty();
 }
 
-void APALPlayerController::AddPartyRole(const SIZE_T RoleId)
+void APALScenePlayerController::AddPartyRole(const SIZE_T RoleId)
 {
 	UPALPlayerStateData* PlayerStateData = GetPlayerState<APALPlayerState>()->GetPlayerStateData();
 	UPALRoleData* NewPartyMember = NewObject<UPALRoleData>();
@@ -180,7 +180,7 @@ void APALPlayerController::AddPartyRole(const SIZE_T RoleId)
 	}
 }
 
-void APALPlayerController::AddFollowerRole(const SIZE_T RoleId)
+void APALScenePlayerController::AddFollowerRole(const SIZE_T RoleId)
 {
 	UPALPlayerStateData* PlayerStateData = GetPlayerState<APALPlayerState>()->GetPlayerStateData();
 	UPALRoleData* NewPartyMember = NewObject<UPALRoleData>();
@@ -200,7 +200,7 @@ void APALPlayerController::AddFollowerRole(const SIZE_T RoleId)
 	NewPartyMember->FrameNum = PlayerStateData->Trails[TrailIndex].Direction * 3;
 }
 
-void APALPlayerController::PartyMoveTo(const FPALPosition3d& Position)
+void APALScenePlayerController::PartyMoveTo(const FPALPosition3d& Position)
 {
 	UPALPlayerStateData* PlayerStateData = GetPlayerState<APALPlayerState>()->GetPlayerStateData();
 	if (!PlayerStateData->Party.IsEmpty())
@@ -224,13 +224,13 @@ void APALPlayerController::PartyMoveTo(const FPALPosition3d& Position)
 	}
 }
 
-void APALPlayerController::MainRoleMoveTo(const FPALPosition3d& Position)
+void APALScenePlayerController::MainRoleMoveTo(const FPALPosition3d& Position)
 {
 	UPALPlayerStateData* PlayerStateData = GetPlayerState<APALPlayerState>()->GetPlayerStateData();
 	PlayerStateData->Party[0]->Position = Position;
 }
 
-void APALPlayerController::PartyWalkTo(const FPALPosition3d& Position)
+void APALScenePlayerController::PartyWalkTo(const FPALPosition3d& Position)
 {
 	UPALPlayerStateData* PlayerStateData = GetPlayerState<APALPlayerState>()->GetPlayerStateData();
 	if (!PlayerStateData->Party.IsEmpty())
@@ -247,7 +247,7 @@ void APALPlayerController::PartyWalkTo(const FPALPosition3d& Position)
 	}
 }
 
-void APALPlayerController::OnMainRoleWalk()
+void APALScenePlayerController::OnMainRoleWalk()
 {
 	UPALPlayerStateData* PlayerStateData = GetPlayerState<APALPlayerState>()->GetPlayerStateData();
 	SIZE_T PartyMemberCount = PlayerStateData->Party.Num();
@@ -289,7 +289,7 @@ void APALPlayerController::OnMainRoleWalk()
 	CameraRestoreNormal();
 }
 
-void APALPlayerController::PartyAtEase(bool bAtEase)
+void APALScenePlayerController::PartyAtEase(bool bAtEase)
 {
 	for (APALRolePawn* RolePawn : RolePawns)
 	{
@@ -297,7 +297,7 @@ void APALPlayerController::PartyAtEase(bool bAtEase)
 	}
 }
 
-void APALPlayerController::RoleAtEase(SIZE_T RoleId, bool bAtEase)
+void APALScenePlayerController::RoleAtEase(SIZE_T RoleId, bool bAtEase)
 {
 	for (APALRolePawn* RolePawn : RolePawns)
 	{
@@ -309,7 +309,7 @@ void APALPlayerController::RoleAtEase(SIZE_T RoleId, bool bAtEase)
 	}
 }
 
-void APALPlayerController::RoleStopWalking(SIZE_T RoleId)
+void APALScenePlayerController::RoleStopWalking(SIZE_T RoleId)
 {
 	for (APALRolePawn* RolePawn : RolePawns)
 	{
@@ -321,7 +321,7 @@ void APALPlayerController::RoleStopWalking(SIZE_T RoleId)
 	}
 }
 
-void APALPlayerController::PartySetWalking()
+void APALScenePlayerController::PartySetWalking()
 {
 	for (APALRolePawn* RolePawn : RolePawns)
 	{
@@ -329,7 +329,7 @@ void APALPlayerController::PartySetWalking()
 	}
 }
 
-void APALPlayerController::PartyStopWalking()
+void APALScenePlayerController::PartyStopWalking()
 {
 	for (APALRolePawn* RolePawn : RolePawns)
 	{
@@ -337,7 +337,7 @@ void APALPlayerController::PartyStopWalking()
 	}
 }
 
-void APALPlayerController::PartyResetSpeed()
+void APALScenePlayerController::PartyResetSpeed()
 {
 	for (APALRolePawn* RolePawn : RolePawns)
 	{
@@ -345,7 +345,7 @@ void APALPlayerController::PartyResetSpeed()
 	}
 }
 
-void APALPlayerController::PartySetSpeed(float Speed)
+void APALScenePlayerController::PartySetSpeed(float Speed)
 {
 	for (APALRolePawn* RolePawn : RolePawns)
 	{
@@ -353,7 +353,7 @@ void APALPlayerController::PartySetSpeed(float Speed)
 	}
 }
 
-void APALPlayerController::PartyMoveClose()
+void APALScenePlayerController::PartyMoveClose()
 {
 	UPALPlayerStateData* PlayerStateData = GetPlayerState<APALPlayerState>()->GetPlayerStateData();
 	if (PlayerStateData->Party.IsEmpty())
@@ -374,7 +374,7 @@ void APALPlayerController::PartyMoveClose()
 	PartyStopWalking();
 }
 
-void APALPlayerController::OnEscape()
+void APALScenePlayerController::OnEscape()
 {
 	if (!GetWorld()->GetGameState<APALGameState>()->IsInMainGame() && CurrentMenu)
 	{
@@ -382,7 +382,7 @@ void APALPlayerController::OnEscape()
 		return;
 	}
 
-	if (!GetWorld()->GetGameState<APALGameState>()->GetGameStateData()->bInBattle)
+	if (!GetPlayerState<APALPlayerState>()->GetPlayerStateData()->bInBattle)
 	{
 		if (!CurrentMenu)
 		{
@@ -409,7 +409,7 @@ void APALPlayerController::OnEscape()
 	}
 }
 
-void APALPlayerController::CloseCurrentMenu()
+void APALScenePlayerController::CloseCurrentMenu()
 {
 	if (CurrentMenu)
 	{
@@ -419,15 +419,7 @@ void APALPlayerController::CloseCurrentMenu()
 	}
 }
 
-void APALPlayerController::ControllOpeningMenu(UPALOpeningMenu* OpeningMenu)
-{
-	check(!GetWorld()->GetGameState<APALGameState>()->IsInMainGame());
-	CurrentMenu = OpeningMenu;
-	OpeningMenu->SetFocus();
-	SetShowMouseCursor(true);
-}
-
-void APALPlayerController::GameRoleStatus()
+void APALScenePlayerController::GameRoleStatus()
 {
 	if (CurrentMenu)
 	{
@@ -443,7 +435,7 @@ void APALPlayerController::GameRoleStatus()
 	PAL_DebugMsg("Open role status menu");
 }
 
-void APALPlayerController::GameUseItem()
+void APALScenePlayerController::GameUseItem()
 {
 	if (CurrentMenu)
 	{
@@ -453,12 +445,12 @@ void APALPlayerController::GameUseItem()
 
 	UPALItemSelectMenu* UseItemMenu = CreateWidget<UPALItemSelectMenu>(this, UPALItemSelectMenu::StaticClass());
 	UseItemMenu->Init(GetPlayerState<APALPlayerState>(), EPALItemFlag::ItemFlagUsable);
-	TWeakObjectPtr<APALPlayerController> PlayerControllerWP(this);
+	TWeakObjectPtr<APALScenePlayerController> PlayerControllerWP(this);
 	TWeakObjectPtr<UPALItemSelectMenu> UseItemMenuWP(UseItemMenu);
 	UseItemMenu->OnMenuItemSelected.AddWeakLambda(this, [PlayerControllerWP, UseItemMenuWP](int16 Item) {
 		if (PlayerControllerWP.IsValid())
 		{
-			APALPlayerController* PlayerController = PlayerControllerWP.Get();
+			APALScenePlayerController* PlayerController = PlayerControllerWP.Get();
 			APALPlayerState* PlayerState = PlayerController->GetPlayerState<APALPlayerState>();
 			UPALGameStateData* GameStateData = PlayerController->GetWorld()->GetGameState<APALGameState>()->GetGameStateData();
 			if (!(GameStateData->Objects[Item].Item.Flags & EPALItemFlag::ItemFlagApplyToAll))
@@ -487,7 +479,7 @@ void APALPlayerController::GameUseItem()
 	PAL_DebugMsg("Open use item menu");
 }
 
-void APALPlayerController::GameUseMagic(SIZE_T RoleId)
+void APALScenePlayerController::GameUseMagic(SIZE_T RoleId)
 {
 	if (CurrentMenu)
 	{
@@ -504,7 +496,7 @@ void APALPlayerController::GameUseMagic(SIZE_T RoleId)
 	PAL_DebugMsg("Open in game use magic menu");
 }
 
-void APALPlayerController::GameEquipItem()
+void APALScenePlayerController::GameEquipItem()
 {
 	if (CurrentMenu)
 	{
@@ -514,7 +506,7 @@ void APALPlayerController::GameEquipItem()
 
 	UPALItemSelectMenu* EquipItemMenu = CreateWidget<UPALItemSelectMenu>(this, UPALItemSelectMenu::StaticClass());
 	EquipItemMenu->Init(GetPlayerState<APALPlayerState>(), EPALItemFlag::ItemFlagEquipable);
-	TWeakObjectPtr<APALPlayerController> PlayerControllerWP(this);
+	TWeakObjectPtr<APALScenePlayerController> PlayerControllerWP(this);
 	TWeakObjectPtr<UPALItemSelectMenu> EquipItemMenuWP(EquipItemMenu);
 	EquipItemMenu->OnMenuItemSelected.AddWeakLambda(this, [PlayerControllerWP, EquipItemMenuWP](int16 Item) {
 		if (PlayerControllerWP.IsValid() && EquipItemMenuWP.IsValid())
@@ -532,7 +524,7 @@ void APALPlayerController::GameEquipItem()
 	PAL_DebugMsg("Open equip item menu");
 }
 
-void APALPlayerController::Buy(uint16 StoreNum)
+void APALScenePlayerController::Buy(uint16 StoreNum)
 {
 	if (CurrentMenu)
 	{
@@ -550,7 +542,7 @@ void APALPlayerController::Buy(uint16 StoreNum)
 	PAL_DebugMsg("Buy in store");
 }
 
-void APALPlayerController::Sell()
+void APALScenePlayerController::Sell()
 {
 	if (CurrentMenu)
 	{
@@ -560,7 +552,7 @@ void APALPlayerController::Sell()
 
 	UPALItemSelectMenu* SellItemMenu = CreateWidget<UPALItemSelectMenu>(this, UPALItemSelectMenu::StaticClass());
 	SellItemMenu->Init(GetPlayerState<APALPlayerState>(), EPALItemFlag::ItemFlagSellable);
-	TWeakObjectPtr<APALPlayerController> PlayerControllerWP(this);
+	TWeakObjectPtr<APALScenePlayerController> PlayerControllerWP(this);
 	TWeakObjectPtr<UPALItemSelectMenu> SellItemMenuWP(SellItemMenu);
 	SellItemMenu->OnMenuItemSelected.AddWeakLambda(this, [PlayerControllerWP, SellItemMenuWP](int16 Item) {
 		if (PlayerControllerWP.IsValid() && SellItemMenuWP.IsValid())
@@ -576,7 +568,7 @@ void APALPlayerController::Sell()
 					{
 						UPALGameStateData* GameStateData = PlayerControllerWP->GetWorld()->GetGameState<APALGameState>()->GetGameStateData();
 						uint16 Price = GameStateData->Objects[Item].Item.Price;
-						APALPlayerController* PlayerController = PlayerControllerWP.Get();
+						APALScenePlayerController* PlayerController = PlayerControllerWP.Get();
 						APALPlayerState* PlayerState = PlayerController->GetPlayerState<APALPlayerState>();
 						if (PlayerState->AddItemToInventory(Item, -1))
 						{
@@ -600,7 +592,7 @@ void APALPlayerController::Sell()
 	PAL_DebugMsg("Open sell item menu");
 }
 
-void APALPlayerController::CameraRestoreNormal()
+void APALScenePlayerController::CameraRestoreNormal()
 {
 	AActor* ViewTarget = GetViewTarget();
 	if (ViewTarget != CameraActor)
@@ -610,7 +602,7 @@ void APALPlayerController::CameraRestoreNormal()
 	}
 }
 
-void APALPlayerController::CameraMoveTo(const FPALPosition3d& Position)
+void APALScenePlayerController::CameraMoveTo(const FPALPosition3d& Position)
 {
 	APALSceneCameraActor* TempCameraActor = GetWorld()->SpawnActor<APALSceneCameraActor>();
 	TempCameraActor->SetActorLocation(Position.toLocation());
@@ -622,9 +614,9 @@ void APALPlayerController::CameraMoveTo(const FPALPosition3d& Position)
 	}
 }
 
-void APALPlayerController::SetupInputComponent()
+void APALScenePlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-	InputComponent->BindAction("Menu", IE_Pressed, this, &APALPlayerController::OnEscape);
-	InputComponent->BindAction("UseItem", IE_Pressed, this, &APALPlayerController::GameUseItem);
+	InputComponent->BindAction("Menu", IE_Pressed, this, &APALScenePlayerController::OnEscape);
+	InputComponent->BindAction("UseItem", IE_Pressed, this, &APALScenePlayerController::GameUseItem);
 }

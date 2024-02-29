@@ -59,7 +59,6 @@ UPALGameStateData* APALGameState::LoadDefaultGame() const
 	FMemory::Memcpy(Data->Scenes, GameData->_Scenes);
 	FMemory::Memcpy(Data->Objects, GameData->_Objects);
 	FMemory::Memcpy(Data->EventObjects, GameData->_EventObjects, GameData->EventObjectCount * sizeof(FEventObject));
-	Data->bInBattle = false;
 	return Data;
 }
 
@@ -84,7 +83,6 @@ UPALGameStateData* APALGameState::LoadSavedGame(SIZE_T SaveSlot)
 	Data->ChaseSpeedChangeCycles = s->ChasespeedChangeCycles;
 	FMemory::Memcpy(Data->Objects, s->Object, sizeof(Data->Objects));
 	FMemory::Memcpy(Data->EventObjects, s->EventObject, sizeof(Data->EventObjects));
-	Data->bInBattle = false;
 	FMemory::Free(s);
 	return Data;
 }
@@ -147,7 +145,7 @@ bool APALGameState::NPCWalkTo(const uint16 EventObjectId, const FPALPosition3d& 
 	return false;
 }
 
-void APALGameState::MonsterChasePlayer(const uint16 EventObjectId, const int32 Speed, uint16 ChaseRange, bool bFloating, APALPlayerController* PlayerController)
+void APALGameState::MonsterChasePlayer(const uint16 EventObjectId, const int32 Speed, uint16 ChaseRange, bool bFloating, APALScenePlayerController* PlayerController)
 {
 	int32 MonsterSpeed = 0;
 	if (GameStateData->ChaseRange != 0)

@@ -15,10 +15,16 @@ class PAL_API APALTimedFadeScriptRunner : public APALScriptRunnerBase
 	GENERATED_BODY()
 
 private:
+	bool bFadeInOrOut;
+
+	float DelayTime;
+
 	float EndWaitTime;
 
+	bool bStarted;
+
 public:
-	void Init(bool bFadeInOrOut, float DelayTime);
+	void Init(bool bInFadeInOrOut, float InDelayTime);
 
 protected:
 	// Called every frame

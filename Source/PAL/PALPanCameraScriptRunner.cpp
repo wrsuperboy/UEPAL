@@ -6,12 +6,12 @@
 void APALPanCameraScriptRunner::Init(const FPALPosition3d& TargetPosition, float InTime)
 {
 	Destination = TargetPosition;
-	const FVector3d& FromLocation = PlayerController->GetViewport().toLocation();
+	const FVector3d& FromLocation = ScenePlayerController->GetViewport().toLocation();
 	Speed = FVector3d::Dist(FromLocation, Destination.toLocation()) / InTime;
 	CameraActor = GetWorld()->SpawnActor<APALSceneCameraActor>();
 	CameraActor->SetActorLocation(FromLocation);
-	PlayerController->CameraRestoreNormal(); // Clear potential camera actors
-	PlayerController->SetViewTarget(CameraActor);
+	ScenePlayerController->CameraRestoreNormal(); // Clear potential camera actors
+	ScenePlayerController->SetViewTarget(CameraActor);
 	MarkInitialized();
 }
 

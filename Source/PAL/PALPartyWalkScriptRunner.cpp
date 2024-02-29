@@ -18,14 +18,14 @@ void APALPartyWalkScriptRunner::TickRun(float DeltaTime)
 	{
 		AccTime = 0;
 
-		const FPALPosition3d& PartyPosition = PlayerController->GetPartyPosition();
+		const FPALPosition3d& PartyPosition = ScenePlayerController->GetPartyPosition();
 
 		double XOffset = Destination.X - PartyPosition.X;
 		double YOffset = Destination.Y - PartyPosition.Y;
 
 		if (FMath::IsNearlyZero(XOffset) && FMath::IsNearlyZero(YOffset))
 		{
-			PlayerController->PartyResetSpeed();
+			ScenePlayerController->PartyResetSpeed();
 			MarkCompeted(true);
 			return;
 		}
@@ -42,7 +42,7 @@ void APALPartyWalkScriptRunner::TickRun(float DeltaTime)
 		double DX = (FMath::Abs(XOffset) > Speed * 2) ? (Speed * (XOffset < 0 ? -2 : 2)) : XOffset;
 		double DY = (FMath::Abs(YOffset) > Speed * 2) ? (Speed * (YOffset < 0 ? -2 : 2)) : YOffset;
 
-		PlayerController->PartyWalkTo(FPALPosition3d(PartyPosition.X + DX, PartyPosition.Y + DY, PartyPosition.Z));
-		PlayerController->PartySetSpeed(Speed * 2 * FMath::Sqrt(2.0) * PIXEL_TO_UNIT / FRAME_TIME);
+		ScenePlayerController->PartyWalkTo(FPALPosition3d(PartyPosition.X + DX, PartyPosition.Y + DY, PartyPosition.Z));
+		ScenePlayerController->PartySetSpeed(Speed * 2 * FMath::Sqrt(2.0) * PIXEL_TO_UNIT / FRAME_TIME);
 	}
 }

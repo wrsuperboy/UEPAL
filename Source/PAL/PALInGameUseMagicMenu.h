@@ -8,7 +8,9 @@
 #include "Components/TextBlock.h"
 #include "Components/GridPanel.h"
 #include "Components/HorizontalBox.h"
+#include "PALRoleSelectMenu.h"
 #include "PALUseMagicMenuItem.h"
+#include "PALRoleInfoPanel.h"
 #include "PALInGameUseMagicMenu.generated.h"
 
 /**
@@ -39,7 +41,7 @@ private:
 	UGridPanel* NineGrid;
 
 	UPROPERTY()
-	UHorizontalBox* RoleInfoBoxArray;
+	UPALRoleInfoPanel* RoleInfoBoxPanel;
 
 	enum EStatus : uint8 { ROLE_UNSELECTED, ROLE_SELECTED, MAGIC_SELECTED };
 	EStatus Status;

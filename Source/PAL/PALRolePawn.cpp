@@ -6,7 +6,7 @@
 #include "Algo/Sort.h"
 #include "PALCommon.h"
 #include "PALPlayerState.h"
-#include "PALPlayerController.h"
+#include "PALScenePlayerController.h"
 #include "PALMapManager.h"
 
 constexpr float DefaultSpeed = 24 * PIXEL_TO_UNIT / FRAME_TIME;
@@ -295,7 +295,7 @@ void APALRolePawn::MoveByInput()
 				PlayerStateData->Trails.Insert(NewTrail, 0);
 				PlayerStateData->Trails.SetNum(MAX_PLAYER_ROLES);
 				RoleDataPrivate->Position = TargetPosition;
-				Cast<APALPlayerController>(Controller)->OnMainRoleWalk();
+				Cast<APALScenePlayerController>(Controller)->OnMainRoleWalk();
 			}
 		}
 	}

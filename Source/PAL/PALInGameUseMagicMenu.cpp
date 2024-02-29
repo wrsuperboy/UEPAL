@@ -16,8 +16,7 @@
 #include "PALGameState.h"
 #include "PALPlayerState.h"
 #include "PALRoleSelectMenu.h"
-#include "PALRoleInfoBox.h"
-#include "PALPlayerController.h"
+#include "PALScenePlayerController.h"
 #include "PALScriptManager.h"
 #include "PALCommon.h"
 #include "PAL.h"
@@ -36,9 +35,9 @@ void UPALInGameUseMagicMenu::SelectRole(SIZE_T InRoleId)
 	{
 		NineGrid->SetVisibility(ESlateVisibility::Visible);
 	}
-	if (RoleInfoBoxArray)
+	if (RoleInfoBoxPanel)
 	{
-		RoleInfoBoxArray->SetVisibility(ESlateVisibility::Visible);
+		RoleInfoBoxPanel->SetVisibility(ESlateVisibility::Visible);
 	}
 	if (MetaBox)
 	{
@@ -69,7 +68,7 @@ void UPALInGameUseMagicMenu::RefreshMagic()
 			bool bEnabled = MP <= PlayerStateData->PlayerRoles.MP[SelectedRoleId];
 
 			uint16 Flags = GameStateData->Objects[Magic].Magic.Flags;
-			if (GameStateData->bInBattle)
+			if (PlayerStateData->bInBattle)
 			{
 				if (!(Flags & EMagicFlag::MagicFlagUsableInBattle))
 				{
@@ -137,20 +136,12 @@ void UPALInGameUseMagicMenu::SelectMagic(uint16 Magic)
 		Status = EStatus::ROLE_SELECTED;
 		RefreshMagic();
 		NineGrid->SetIsEnabled(true);
-		for (UWidget*& Widget : RoleInfoBoxArray->GetAllChildren())
-		{
-			UPALRoleInfoBox* RoleInfoBox = Cast<UPALRoleInfoBox>(Widget);
-			RoleInfoBox->SetSelectionEnabled(false);
-			RoleInfoBox->Refresh();
-		}
+		RoleInfoBoxPanel->SetSelectionEnabled(false);
+		RoleInfoBoxPanel->Refresh();
 		return;
 	}
 
-	for (UWidget*& Widget : RoleInfoBoxArray->GetAllChildren())
-	{
-		UPALRoleInfoBox* RoleInfoBox = Cast<UPALRoleInfoBox>(Widget);
-		RoleInfoBox->SetSelectionEnabled(true);
-	}
+	RoleInfoBoxPanel->SetSelectionEnabled(true);
 }
 
 void UPALInGameUseMagicMenu::ChangeMagic(uint16 Magic)
@@ -216,23 +207,15 @@ void UPALInGameUseMagicMenu::SelectTarget(SIZE_T InRoleId)
 			{
 				Status = EStatus::ROLE_SELECTED;
 				NineGrid->SetIsEnabled(true);
-				for (UWidget*& Widget : RoleInfoBoxArray->GetAllChildren())
-				{
-					UPALRoleInfoBox* RoleInfoBox = Cast<UPALRoleInfoBox>(Widget);
-					RoleInfoBox->SetSelectionEnabled(false);
-					RoleInfoBox->Refresh();
-				}
+				RoleInfoBoxPanel->SetSelectionEnabled(false);
+				RoleInfoBoxPanel->Refresh();
 			}
 		}
 	}
 
 	ChangeMagic(SelectedMagic);
 	RefreshMagic();
-	for (UWidget*& Widget : RoleInfoBoxArray->GetAllChildren())
-	{
-		UPALRoleInfoBox* RoleInfoBox = Cast<UPALRoleInfoBox>(Widget);
-		RoleInfoBox->Refresh();
-	}
+	RoleInfoBoxPanel->Refresh();
 }
 
 void UPALInGameUseMagicMenu::NativeConstruct()
@@ -240,7 +223,7 @@ void UPALInGameUseMagicMenu::NativeConstruct()
 	Super::NativeConstruct();
 
 	RoleSelectMenu = CreateWidget<UPALRoleSelectMenu>(GetOwningPlayer(), UPALRoleSelectMenu::StaticClass());
-	APALPlayerState* PlayerState = Cast<APALPlayerController>(GetOwningPlayer())->GetPlayerState<APALPlayerState>();
+	APALPlayerState* PlayerState = GetOwningPlayer()->GetPlayerState<APALPlayerState>();
 	for (UPALRoleData* RoleData : PlayerState->GetPlayerStateData()->Party)
 	{
 		RoleSelectMenu->AddPartyRole(RoleData->RoleId, PlayerState, true);
@@ -458,17 +441,10 @@ void UPALInGameUseMagicMenu::NativeConstruct()
 	NineGrid->AddChildToGrid(MarginL, 1, 0);
 	NineGrid->AddChildToGrid(MarginR, 1, 2);
 
-	RoleInfoBoxArray = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
-	for (UPALRoleData* RoleData : PlayerState->GetPlayerStateData()->Party)
-	{
-		UPALRoleInfoBox* RoleInfoBox = CreateWidget<UPALRoleInfoBox>(GetOwningPlayer(), UPALRoleInfoBox::StaticClass());
-		RoleInfoBox->Init(RoleData->RoleId);
-		RoleInfoBox->SetSelectionEnabled(false);
-		RoleInfoBox->SetPadding(FMargin(0, 0, 3, 0) * UI_PIXEL_TO_UNIT);
-		RoleInfoBox->OnSelected.BindUObject(this, &UPALInGameUseMagicMenu::SelectTarget);
-		RoleInfoBoxArray->AddChildToHorizontalBox(RoleInfoBox);
-	}
-	UCanvasPanelSlot* RoleInfoBoxArraySlot = Canvas->AddChildToCanvas(RoleInfoBoxArray);
+	RoleInfoBoxPanel = WidgetTree->ConstructWidget<UPALRoleInfoPanel>(UPALRoleInfoPanel::StaticClass());
+	RoleInfoBoxPanel->SetSelectionEnabled(false);
+	RoleInfoBoxPanel->OnSelected.BindUObject(this, &UPALInGameUseMagicMenu::SelectTarget);
+	UCanvasPanelSlot* RoleInfoBoxArraySlot = Canvas->AddChildToCanvas(RoleInfoBoxPanel);
 	RoleInfoBoxArraySlot->SetAlignment(FVector2D(0.5, 1));
 	RoleInfoBoxArraySlot->SetAnchors(FAnchors(0.5, 1, 0.5, 1));
 	RoleInfoBoxArraySlot->SetAutoSize(true);
@@ -481,18 +457,14 @@ bool UPALInGameUseMagicMenu::GoBack()
 		Status = EStatus::ROLE_UNSELECTED;
 		RoleSelectMenu->SetVisibility(ESlateVisibility::Visible);
 		NineGrid->SetVisibility(ESlateVisibility::Hidden);
-		RoleInfoBoxArray->SetVisibility(ESlateVisibility::Hidden);
+		RoleInfoBoxPanel->SetVisibility(ESlateVisibility::Hidden);
 		MetaBox->SetVisibility(ESlateVisibility::Hidden);
 		return true;
 	}
 	else if (Status == EStatus::MAGIC_SELECTED)
 	{
 		Status = EStatus::ROLE_SELECTED;
-		for (UWidget*& Widget : RoleInfoBoxArray->GetAllChildren())
-		{
-			UPALRoleInfoBox* RoleInfoBox = Cast<UPALRoleInfoBox>(Widget);
-			RoleInfoBox->SetSelectionEnabled(false);
-		}
+		RoleInfoBoxPanel->SetSelectionEnabled(false);
 		NineGrid->SetIsEnabled(true);
 		return true;
 	}

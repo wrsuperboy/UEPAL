@@ -101,6 +101,10 @@ public:
 
 	EPALSoundFormat GetSoundFormat() const;
 
+	UPALSprite* GetBattleRoleSprite(const SIZE_T BattleRoleSpriteNum);
+
+	UPALSprite* GetBattleEnemySprite(const SIZE_T BattleEnemySpriteNum);
+
 private:
 	UPALMKF* LoadMKF(const FString& FileName) const;
 

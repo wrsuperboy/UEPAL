@@ -9,18 +9,18 @@
 #include "PALMenuBase.h"
 #include "PALOpeningMenu.h"
 #include "PAL.h"
-#include "PALPlayerController.generated.h"
+#include "PALScenePlayerController.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PAL_API APALPlayerController : public APlayerController
+class PAL_API APALScenePlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
 public:
-	APALPlayerController();
+	APALScenePlayerController();
 	
 private:
 	UPROPERTY(VisibleAnywhere)
@@ -84,8 +84,6 @@ public:
 	void OnEscape();
 
 	void CloseCurrentMenu();
-
-	void ControllOpeningMenu(UPALOpeningMenu* OpeningMenu);
 
 	void GameRoleStatus();
 

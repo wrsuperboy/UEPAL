@@ -7,7 +7,7 @@
 #include "PALGameData.h"
 #include "PALGameModeBase.h"
 #include "PALGameStateData.h"
-#include "PALPlayerController.h"
+#include "PALScenePlayerController.h"
 #include "PALPlayerStateData.h"
 #include "PALScriptRunnerBase.generated.h"
 
@@ -32,7 +32,10 @@ protected:
 	UPALGameStateData* GameStateData;
 
 	UPROPERTY()
-	APALPlayerController* PlayerController;
+	APlayerController* PlayerController;
+
+	UPROPERTY()
+	APALScenePlayerController* ScenePlayerController;
 
 	UPROPERTY()
 	UPALPlayerStateData* PlayerStateData;

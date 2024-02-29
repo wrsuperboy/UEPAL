@@ -7,7 +7,7 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Components/CanvasPanelSlot.h"
 #include "PALShowCash.h"
-#include "PALPlayerController.h"
+#include "PALScenePlayerController.h"
 #include "PALSceneGameMode.h"
 #include "PALMenuAnchor.h"
 #include "PALRoleSelectMenu.h"
@@ -23,18 +23,18 @@ void UPALInGameMenu::EmptyFunction()
 
 void UPALInGameMenu::CreateRoleStatusMenu()
 {
-	Cast<APALPlayerController>(GetOwningPlayer())->GameRoleStatus();
+	Cast<APALScenePlayerController>(GetOwningPlayer())->GameRoleStatus();
 }
 
 UUserWidget* UPALInGameMenu::CreateInGameMagicMenu()
 {
 	UPALRoleSelectMenu* RoleSelectMenu = CreateWidget<UPALRoleSelectMenu>(GetOwningPlayer(), UPALRoleSelectMenu::StaticClass(), TEXT("InGameMagicMenu"));
-	APALPlayerState* PlayerState = Cast<APALPlayerController>(GetOwningPlayer())->GetPlayerState<APALPlayerState>();
+	APALPlayerState* PlayerState = GetOwningPlayer()->GetPlayerState<APALPlayerState>();
 	for (UPALRoleData* RoleData : PlayerState->GetPlayerStateData()->Party)
 	{
 		RoleSelectMenu->AddPartyRole(RoleData->RoleId, PlayerState, true);
 	}
-	TWeakObjectPtr<APALPlayerController> PlayerControllerWP = Cast<APALPlayerController>(GetOwningPlayer());
+	TWeakObjectPtr<APALScenePlayerController> PlayerControllerWP = Cast<APALScenePlayerController>(GetOwningPlayer());
 	RoleSelectMenu->OnRoleSelected.BindWeakLambda(this, [PlayerControllerWP](SIZE_T RoleId) {
 		if (PlayerControllerWP.IsValid())
 		{
@@ -48,12 +48,12 @@ UUserWidget* UPALInGameMenu::CreateInGameMagicMenu()
 
 void UPALInGameMenu::CreateEquipItemMenu()
 {
-	Cast<APALPlayerController>(GetOwningPlayer())->GameEquipItem();
+	Cast<APALScenePlayerController>(GetOwningPlayer())->GameEquipItem();
 }
 
 void UPALInGameMenu::CreateUseItemMenu()
 {
-	Cast<APALPlayerController>(GetOwningPlayer())->GameUseItem();
+	Cast<APALScenePlayerController>(GetOwningPlayer())->GameUseItem();
 }
 
 UPALMenuBox* UPALInGameMenu::CreateIventoryMenu()
@@ -76,7 +76,7 @@ void UPALInGameMenu::CreateSaveGameMenu()
 	SaveSlotMenuSlot->SetZOrder(1);
 	SaveSlotMenuSlot->SetAutoSize(true);
 	SaveSlotMenuSlot->SetPosition(FVector2D(-13, 0) * UI_PIXEL_TO_UNIT);
-	TWeakObjectPtr<APALPlayerController> PlayerControllerWP(Cast<APALPlayerController>(GetOwningPlayer()));
+	TWeakObjectPtr<APALScenePlayerController> PlayerControllerWP(Cast<APALScenePlayerController>(GetOwningPlayer()));
 	TWeakObjectPtr<APALSceneGameMode> SceneGameModeWP(Cast<APALSceneGameMode>(GetWorld()->GetAuthGameMode()));
 	SaveSlotMenu->OnSaveSlotSelected.BindWeakLambda(this, [PlayerControllerWP, SceneGameModeWP](SIZE_T SaveSlot) {
 		if (SceneGameModeWP.IsValid())
@@ -101,7 +101,7 @@ void UPALInGameMenu::CreateLoadGameMenu()
 	SaveSlotMenuSlot->SetZOrder(1);
 	SaveSlotMenuSlot->SetAutoSize(true);
 	SaveSlotMenuSlot->SetPosition(FVector2D(-13, 0) * UI_PIXEL_TO_UNIT);
-	TWeakObjectPtr<APALPlayerController> PlayerControllerWP(Cast<APALPlayerController>(GetOwningPlayer()));
+	TWeakObjectPtr<APALScenePlayerController> PlayerControllerWP(Cast<APALScenePlayerController>(GetOwningPlayer()));
 	TWeakObjectPtr<APALSceneGameMode> SceneGameModeWP(Cast<APALSceneGameMode>(GetWorld()->GetAuthGameMode()));
 	SaveSlotMenu->OnSaveSlotSelected.BindWeakLambda(this, [PlayerControllerWP, SceneGameModeWP](SIZE_T SaveSlot) {
 		if (SceneGameModeWP.IsValid())
@@ -152,7 +152,7 @@ void UPALInGameMenu::CreateEnableSoundMenu()
 void UPALInGameMenu::CreateQuitGameConfirmMenu()
 {
 	UPALConfirmMenu* ConfirmMenu = CreateWidget<UPALConfirmMenu>(GetOwningPlayer(), UPALConfirmMenu::StaticClass());
-	TWeakObjectPtr<APALPlayerController> PlayerControllerWP(Cast<APALPlayerController>(GetOwningPlayer()));
+	TWeakObjectPtr<APALScenePlayerController> PlayerControllerWP(Cast<APALScenePlayerController>(GetOwningPlayer()));
 	TWeakObjectPtr<UPALInGameMenu> InGameMenuWP(this);
 	ConfirmMenu->OnConfirm.AddWeakLambda(this, [PlayerControllerWP, InGameMenuWP](bool bYes) {
 		if (InGameMenuWP.IsValid())

@@ -6,6 +6,7 @@
 #include "PAL.h"
 #include "PALGameData.h"
 #include "PALRoleData.h"
+#include "PALBattleEnemyData.h"
 #include "PALPlayerStateData.generated.h"
 
 struct FTrail
@@ -49,15 +50,36 @@ public:
 
 	FPlayerRoles EquipmentEffects[EPALBodyPart::_BodyPartCount];
 
-	uint16 RoleStatus[MAX_PLAYER_ROLES][EPALRoleStatus::_RoleStatusCount];
+	uint16 RoleStatus[MAX_PLAYER_ROLES][EPALStatus::_StatusCount];
 
 	bool bAutoBattle;
 
 	int16 CurrentEquipPart;
 
-	SIZE_T CurrentMainMenuItemNum;
-
-	SIZE_T CurrentSystemMenuItemNum;
-
 	SIZE_T LastPartyRoleId[MAX_PLAYER_ROLES];
+
+	bool bInBattle;
+
+	SIZE_T BattleMusicNum;
+
+	SIZE_T BattleFieldNum;
+
+	EPALBattleResult LastBattleResult;
+
+	bool bHasTriggerScriptToRun;
+
+	uint16 ScriptEntryToRun;
+
+	uint16 EventObjectIdToRun;
+
+	UPROPERTY(VisibleAnywhere)
+	TArray<UPALBattleEnemyData*> CurrentEnemies;
+
+	bool bCurrentEnemyIsBoss;
+
+	int32 ExpGainedInBattle;
+
+	int32 CashGainedInBattle;
+
+	bool bBattleHiding;
 };

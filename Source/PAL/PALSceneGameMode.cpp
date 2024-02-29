@@ -24,6 +24,7 @@
 
 APALSceneGameMode::APALSceneGameMode() : Super()
 {
+	PlayerControllerClass = APALScenePlayerController::StaticClass();
 	PrimaryActorTick.bCanEverTick = true;
 	bLoadGlobalData = false;
 	bLoadScene = false;
@@ -144,10 +145,19 @@ void APALSceneGameMode::SaveGame(const SIZE_T SaveSlot)
 	Common->PutSavedGame(SaveSlot, SavedGame);
 }
 
-EPALBattleResult APALSceneGameMode::StartBattle(const SIZE_T EnenyTeam, const bool bIsBoss)
+EPALBattleResult APALSceneGameMode::StartBattle(const SIZE_T EnenyTeamNum, const bool bIsBoss)
 {
-	// TODO
-	return EPALBattleResult::Won;
+	if (MainPlayerStatePrivate->GetPlayerStateData()->bInBattle)
+	{
+		MainPlayerStatePrivate->GetPlayerStateData()->bInBattle = false;
+		GetWorld()->GetSubsystem<UPALAudioManager>()->PlayMusic(GetGameState<APALGameState>()->GetGameStateData()->MusicNum, true, 1);
+		return MainPlayerStatePrivate->GetPlayerStateData()->LastBattleResult;
+	}
+
+	MainPlayerStatePrivate->StartBattle(EnenyTeamNum, bIsBoss);
+	UGameplayStatics::OpenLevel(this, TEXT("PAL_Battle"));
+
+	return EPALBattleResult::BattleResultPreBattle;
 }
 
 void APALSceneGameMode::SetLight(SIZE_T PaletteNum, bool bNightPalette)
@@ -253,6 +263,12 @@ void APALSceneGameMode::TryRestoreGame()
 	MainPlayerControllerPrivate->ReloadRoles();
 	// Restore screen wave
 	WaveScreen(Cast<APALGameState>(GameState)->GetGameStateData()->ScreenWave, 0.);
+	// Restore unfinished trigger script
+	if (MainPlayerStatePrivate->GetPlayerStateData()->bHasTriggerScriptToRun)
+	{
+		MainPlayerStatePrivate->GetPlayerStateData()->bHasTriggerScriptToRun = false;
+		GetWorld()->GetSubsystem<UPALScriptManager>()->RunTriggerScript(MainPlayerStatePrivate->GetPlayerStateData()->ScriptEntryToRun, MainPlayerStatePrivate->GetPlayerStateData()->EventObjectIdToRun, false);
+	}
 	// Restore map & event objects
 	GetWorld()->GetSubsystem<UPALMapManager>()->LoadMap(GetGameState<APALGameState>()->GetGameStateData()->SceneNum, GetWorld());
 }
@@ -286,7 +302,7 @@ void APALSceneGameMode::StartPlay()
 {
 	UPlayer* MainPlayer = GetGameInstance<UPALGameInstance>()->GetMainPlayer();
 	check(MainPlayer);
-	MainPlayerControllerPrivate = Cast<APALPlayerController>(MainPlayer->GetPlayerController(nullptr));
+	MainPlayerControllerPrivate = Cast<APALScenePlayerController>(MainPlayer->GetPlayerController(nullptr));
 	check(MainPlayerControllerPrivate);
 	MainPlayerStatePrivate = MainPlayerControllerPrivate->GetPlayerState<APALPlayerState>();
 	check(MainPlayerStatePrivate);

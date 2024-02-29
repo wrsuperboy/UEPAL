@@ -5,7 +5,7 @@
 #include "PALCommon.h"
 #include "PALGameInstance.h"
 #include "PALGameState.h"
-#include "PALPlayerController.h"
+#include "PALScenePlayerController.h"
 #include "PALScriptManager.h"
 #include "PALMapManager.h"
 #include "PAL.h"
@@ -207,7 +207,7 @@ void APALEventObjectActor::Tick(float DeltaTime)
 			if (EventObjectPrivate->State > 0 && EventObjectPrivate->TriggerMode >= ETriggerMode::TouchNear)
 			{
 				// This event object can be triggered without manually exploring
-				APALPlayerController* PlayerController = Cast<APALPlayerController>(GetGameInstance<UPALGameInstance>()
+				APALScenePlayerController* PlayerController = Cast<APALScenePlayerController>(GetGameInstance<UPALGameInstance>()
 					->GetMainPlayer()->GetPlayerController(nullptr));
 				FPALPosition2d Position2d = PlayerController->GetPartyPosition().to2d();
 				if (FMath::Abs(Position2d.X - EventObjectPrivate->X) + FMath::Abs(Position2d.Y - EventObjectPrivate->Y) * 2
@@ -249,7 +249,7 @@ void APALEventObjectActor::Tick(float DeltaTime)
 		// Check if the player is in the way
 		if (EventObjectPrivate->State >= EObjectState::ObjStateBlocker && EventObjectPrivate->SpriteNum != 0)
 		{
-			APALPlayerController* PlayerController = Cast<APALPlayerController>(GetGameInstance<UPALGameInstance>()
+			APALScenePlayerController* PlayerController = Cast<APALScenePlayerController>(GetGameInstance<UPALGameInstance>()
 				->GetMainPlayer()->GetPlayerController(nullptr));
 			const FPALPosition3d& PartyPosition = PlayerController->GetPartyPosition();
 			if (FMath::Abs(EventObjectPrivate->X - PartyPosition.X) + FMath::Abs(EventObjectPrivate->Y * 2 - PartyPosition.Y) <= 12) {

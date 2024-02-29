@@ -47,7 +47,7 @@ bool APALTriggerScriptActor::RunTriggerScript(uint16& InOutScriptEntry, const ui
 	return false;
 }
 
-bool APALTriggerScriptActor::AllowNewTriggers()
+bool APALTriggerScriptActor::AreNewTriggersAllowed()
 {
 	return !bWaitingExclusive;
 }
@@ -185,16 +185,21 @@ bool APALTriggerScriptActor::RunTriggerScript()
 		{
 			EPALBattleResult BattleResult = Cast<APALSceneGameMode>(GameMode)->StartBattle(static_cast<SIZE_T>(Script->Operand[0]), static_cast<bool>(!Script->Operand[2]));
 
-			if (BattleResult == EPALBattleResult::PreBattle)
+			PAL_DebugMsg(FString("Battle Result ").Append(FString::FromInt(BattleResult)));
+			if (BattleResult == EPALBattleResult::BattleResultPreBattle)
 			{
 				// If battle has not started yet
-				continue;
+				PlayerStateData->ScriptEntryToRun = ScriptEntry;
+				PlayerStateData->EventObjectIdToRun = EventObjectId;
+				PlayerStateData->bHasTriggerScriptToRun = true;
+				SetActorTickEnabled(false);
+				return false;
 			}
-			if (BattleResult == EPALBattleResult::Lost && Script->Operand[1] != 0)
+			if (BattleResult == EPALBattleResult::BattleResultLost && Script->Operand[1] != 0)
 			{
 				ScriptEntry = Script->Operand[1];
 			}
-			else if (BattleResult == EPALBattleResult::Fleed && Script->Operand[2] != 0)
+			else if (BattleResult == EPALBattleResult::BattleResultFleed && Script->Operand[2] != 0)
 			{
 				ScriptEntry = Script->Operand[2];
 			}
@@ -218,7 +223,8 @@ bool APALTriggerScriptActor::RunTriggerScript()
 			ClearDialog();
 			if (!Script->Operand[2])
 			{
-				PlayerController->PartyAtEase(true);
+				APALScenePlayerController* ScenePlayerController = Cast<APALScenePlayerController>(PlayerController);
+				ScenePlayerController->PartyAtEase(true);
 			}
 			TWeakObjectPtr<APALTriggerScriptActor> ThisWP(this);
 			APALTimedWaitScriptRunner* Runner = GetWorld()->SpawnActor<APALTimedWaitScriptRunner>();
@@ -392,7 +398,10 @@ bool APALTriggerScriptActor::RunTriggerScript()
 
 void APALTriggerScriptActor::WaitForRunner(APALScriptRunnerBase* ScriptRunner, bool bInWaitingExclusive, TFunction<void()> Callback)
 {
-	PlayerController->ControllByGame();
+	APALScenePlayerController* ScenePlayerController = Cast<APALScenePlayerController>(PlayerController);
+	if (ScenePlayerController) {
+		ScenePlayerController->ControllByGame();
+	}
 	WaitCallback = Callback;
 	CurrentRunner = ScriptRunner;
 	bWaitingExclusive = bInWaitingExclusive;
@@ -406,8 +415,7 @@ void APALTriggerScriptActor::PreInitializeComponents()
 	// could be a scene game mode or a battle game mode
 	GameMode = GetWorld()->GetAuthGameMode<APALGameModeBase>();
 	GameStateData = GetWorld()->GetGameState<APALGameState>()->GetGameStateData();
-	PlayerController = Cast<APALPlayerController>(GetWorld()->GetGameInstance<UPALGameInstance>()
-		->GetMainPlayer()->GetPlayerController(nullptr));
+	PlayerController = GetWorld()->GetGameInstance<UPALGameInstance>()->GetMainPlayer()->GetPlayerController(nullptr);
 	PlayerStateData = PlayerController->GetPlayerState<APALPlayerState>()->GetPlayerStateData();
 	bWaiting = false;
 	bWaitingExclusive = false;
@@ -432,7 +440,10 @@ void APALTriggerScriptActor::Tick(float DeltaTime)
 				WaitCallback();
 				WaitCallback = nullptr;
 			}
-			PlayerController->ReleaseControllFromGame();
+			APALScenePlayerController* ScenePlayerController = Cast<APALScenePlayerController>(PlayerController);
+			if (ScenePlayerController) {
+				ScenePlayerController->ReleaseControllFromGame();
+			}
 			bWaitingExclusive = false;
 			bWaiting = false;
 		}

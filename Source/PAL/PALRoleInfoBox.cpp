@@ -9,12 +9,12 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Slate/SlateBrushAsset.h"
 #include "Styling/SlateBrush.h"
-#include "PALPlayerController.h"
+#include "PALScenePlayerController.h"
 #include "PALGameState.h"
 #include "PALGameStateData.h"
 #include "PALCommon.h"
 
-const FVector2D StatusPosition[EPALRoleStatus::_RoleStatusCount] =
+const FVector2D StatusPosition[EPALStatus::_StatusCount] =
 {
    FVector2D(35, 19),  // confused
    FVector2D(44, 12),  // slow
@@ -27,7 +27,7 @@ const FVector2D StatusPosition[EPALRoleStatus::_RoleStatusCount] =
    FVector2D(0, 0),    // dualattack
 };
 
-const SIZE_T StatusWordNum[EPALRoleStatus::_RoleStatusCount] =
+const SIZE_T StatusWordNum[EPALStatus::_StatusCount] =
 {
    0x1D,  // confused
    0x1B,  // slow
@@ -40,7 +40,7 @@ const SIZE_T StatusWordNum[EPALRoleStatus::_RoleStatusCount] =
    0x00,  // dualattack
 };
 
-const SIZE_T StatusColor[EPALRoleStatus::_RoleStatusCount] =
+const SIZE_T StatusColor[EPALStatus::_StatusCount] =
 {
    0x5F,  // confused
    0xBF,  // slow
@@ -61,7 +61,7 @@ void UPALRoleInfoBox::Init(SIZE_T InRoleId)
 
 void UPALRoleInfoBox::SetSelectionEnabled(bool bInSelectionEnabled)
 {
-	if (bSelectionEnabled != bInSelectionEnabled)
+	if (bSelectionEnabled != bInSelectionEnabled && Button)
 	{
 		bSelectionEnabled = bInSelectionEnabled;
 
@@ -86,8 +86,8 @@ void UPALRoleInfoBox::SetSelectionEnabled(bool bInSelectionEnabled)
 void UPALRoleInfoBox::Refresh()
 {
 	UPALCommon* Common = GetGameInstance()->GetSubsystem<UPALCommon>();
-	APALPlayerState* PlayerState = Cast<APALPlayerController>(GetOwningPlayer())->GetPlayerState<APALPlayerState>();
-	UPALPlayerStateData* PlayerStateData = Cast<APALPlayerController>(GetOwningPlayer())->GetPlayerState<APALPlayerState>()->GetPlayerStateData();
+	APALPlayerState* PlayerState = GetOwningPlayer()->GetPlayerState<APALPlayerState>();
+	UPALPlayerStateData* PlayerStateData = GetOwningPlayer()->GetPlayerState<APALPlayerState>()->GetPlayerStateData();
 	HPNumber->SetText(FText::FromString(FString::FromInt(PlayerStateData->PlayerRoles.HP[RoleId])));
 	MaxHPNumber->SetText(FText::FromString(FString::FromInt(PlayerStateData->PlayerRoles.MaxHP[RoleId])));
 	MPNumber->SetText(FText::FromString(FString::FromInt(PlayerStateData->PlayerRoles.MP[RoleId])));
@@ -102,7 +102,7 @@ void UPALRoleInfoBox::Refresh()
 
 	if (PlayerStateData->PlayerRoles.HP[RoleId] > 0)
 	{
-		for (EPALRoleStatus RoleStatus = Confused; RoleStatus < EPALRoleStatus::_RoleStatusCount; RoleStatus = static_cast<EPALRoleStatus>(RoleStatus + 1))
+		for (EPALStatus RoleStatus = Confused; RoleStatus < EPALStatus::_StatusCount; RoleStatus = static_cast<EPALStatus>(RoleStatus + 1))
 		{
 			if (PlayerState->IsRoleInStatus(RoleId, RoleStatus) && StatusWordNum[RoleStatus] != 0)
 			{
@@ -185,7 +185,7 @@ void UPALRoleInfoBox::NativeConstruct()
 	FaceImageSlot->SetSize(FVector2D(FaceTexture->GetSizeX(), FaceTexture->GetSizeY()) * UI_PIXEL_TO_UNIT);
 	FaceImageSlot->SetPosition(FVector2D(-3, -4) * UI_PIXEL_TO_UNIT);
 
-	APALPlayerState* PlayerState = Cast<APALPlayerController>(GetOwningPlayer())->GetPlayerState<APALPlayerState>();
+	APALPlayerState* PlayerState = GetOwningPlayer()->GetPlayerState<APALPlayerState>();
 	UPALPlayerStateData* PlayerStateData = PlayerState->GetPlayerStateData();
 
 	HPNumber = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());

@@ -14,7 +14,7 @@
 #include "PALGameInstance.h"
 #include "PALGameState.h"
 #include "PALGameStateData.h"
-#include "PALPlayerController.h"
+#include "PALScenePlayerController.h"
 #include "PALCommon.h"
 #include "PALScriptManager.h"
 #include "PAL.h"
@@ -27,7 +27,7 @@ void UPALEquipItemMenu::Init(int16 Item)
 void UPALEquipItemMenu::ChangeRole(SIZE_T RoleId)
 {
 	// Draw the current equipment of the selected player
-	APALPlayerState* PlayerState = Cast<APALPlayerController>(GetOwningPlayer())->GetPlayerState<APALPlayerState>();
+	APALPlayerState* PlayerState = GetOwningPlayer()->GetPlayerState<APALPlayerState>();
 	UPALPlayerStateData* PlayerStateData = PlayerState->GetPlayerStateData();
 	UPALCommon* Common = GetGameInstance()->GetSubsystem<UPALCommon>();
 	for (SIZE_T i = 0; i < MAX_PLAYER_EQUIPMENTS; i++)
@@ -52,7 +52,7 @@ void UPALEquipItemMenu::ChangeRole(SIZE_T RoleId)
 void UPALEquipItemMenu::SelectRole(SIZE_T RoleId)
 {
 	UPALGameStateData* GameStateData = GetWorld()->GetGameState<APALGameState>()->GetGameStateData();
-	APALPlayerState* PlayerState = Cast<APALPlayerController>(GetOwningPlayer())->GetPlayerState<APALPlayerState>();
+	APALPlayerState* PlayerState = GetOwningPlayer()->GetPlayerState<APALPlayerState>();
 	UPALPlayerStateData* PlayerStateData = PlayerState->GetPlayerStateData();
 	
 	// Get the equip part
@@ -143,7 +143,7 @@ void UPALEquipItemMenu::NativeConstruct()
 	Border->AddChild(Canvas);
 
 	UPALGameStateData* GameStateData = GetWorld()->GetGameState<APALGameState>()->GetGameStateData();
-	APALPlayerState* PlayerState = Cast<APALPlayerController>(GetOwningPlayer())->GetPlayerState<APALPlayerState>();
+	APALPlayerState* PlayerState = GetOwningPlayer()->GetPlayerState<APALPlayerState>();
 	ItemImage = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
 	UCanvasPanelSlot* ItemImageSlot = Canvas->AddChildToCanvas(ItemImage);
 	ItemImageSlot->SetAnchors(FAnchors(40. / 320., 40. / 200., 40. / 320., 40. / 200.));

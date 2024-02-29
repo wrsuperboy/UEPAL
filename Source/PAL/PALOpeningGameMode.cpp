@@ -6,9 +6,14 @@
 #include "Kismet/GameplayStatics.h"
 #include "PALGameInstance.h"
 #include "PALGameState.h"
-#include "PALPlayerController.h"
+#include "PALOpeningPlayerController.h"
 #include "PALOpeningMenu.h"
 #include "PALAudioManager.h"
+
+APALOpeningGameMode::APALOpeningGameMode() : Super()
+{
+	PlayerControllerClass = APALOpeningPlayerController::StaticClass();
+}
 
 void APALOpeningGameMode::StartMainGame(SIZE_T SaveSlotNum)
 {
@@ -35,7 +40,7 @@ void APALOpeningGameMode::StartPlay()
 		{
 			OpeningMenuWP.Get()->RemoveFromParent();
 		}});
-	Cast<APALPlayerController>(MainPlayer->GetPlayerController(nullptr))->ControllOpeningMenu(OpeningMenu);
+	Cast<APALOpeningPlayerController>(MainPlayer->GetPlayerController(nullptr))->ControllOpeningMenu(OpeningMenu);
 	OpeningMenu->AddToViewport();
 	if (!GetWorld()->GetSubsystem<UPALAudioManager>()->PlayCDTrack(7))
 	{

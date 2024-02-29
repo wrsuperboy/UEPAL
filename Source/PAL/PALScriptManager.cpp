@@ -26,7 +26,7 @@ bool UPALScriptManager::RunTriggerScript(uint16& InOutScriptEntry, const uint16 
 	for (TActorIterator<APALTriggerScriptActor> It(GetWorld(), APALTriggerScriptActor::StaticClass()); It; ++It)
 	{
 		APALTriggerScriptActor* TriggerScriptActor = *It;
-		if (TriggerScriptActor->IsValidLowLevelFast() && !TriggerScriptActor->AllowNewTriggers())
+		if (TriggerScriptActor->IsValidLowLevelFast() && !TriggerScriptActor->AreNewTriggersAllowed())
 		{
 			bOutSuccess = false;
 			return true;
@@ -219,9 +219,10 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 	}
 
 
-	APALSceneGameMode* GameMode = GetWorld()->GetAuthGameMode<APALSceneGameMode>();
-	APALPlayerController* PlayerController = Cast<APALPlayerController>(GetWorld()->GetGameInstance<UPALGameInstance>()->GetMainPlayer()->GetPlayerController(nullptr));
+	APALSceneGameMode* SceneGameMode = GetWorld()->GetAuthGameMode<APALSceneGameMode>();
+	APlayerController* PlayerController = GetWorld()->GetGameInstance<UPALGameInstance>()->GetMainPlayer()->GetPlayerController(nullptr);
 	APALPlayerState* PlayerState = PlayerController->GetPlayerState<APALPlayerState>();
+	APALScenePlayerController* ScenePlayerController = Cast<APALScenePlayerController>(PlayerController);
 	UPALPlayerStateData* PlayerStateData = PlayerState->GetPlayerStateData();
 	UPALAudioManager* AudioManager = GetWorld()->GetSubsystem<UPALAudioManager>();
 
@@ -273,7 +274,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 	case 0x0012:
 		// Set the position of the event object, relative to the party
 	{
-		FPALPosition2d PartyPosition2d = PlayerController->GetPartyPosition().to2d();
+		FPALPosition2d PartyPosition2d = ScenePlayerController->GetPartyPosition().to2d();
 		Current->X = Script->Operand[1] + FMath::RoundToInt(PartyPosition2d.X);
 		Current->Y = Script->Operand[2] + FMath::RoundToInt(PartyPosition2d.Y);
 	}
@@ -297,8 +298,8 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		PlayerStateData->PartyDirection = static_cast<EPALDirection>(Script->Operand[0]);
 		if (PlayerStateData->Party.IsValidIndex(Script->Operand[2]))
 		{
-			PlayerController->RoleStopWalking(PlayerStateData->Party[Script->Operand[2]]->RoleId);
-			PlayerController->RoleAtEase(PlayerStateData->Party[Script->Operand[2]]->RoleId, true);
+			ScenePlayerController->RoleStopWalking(PlayerStateData->Party[Script->Operand[2]]->RoleId);
+			ScenePlayerController->RoleAtEase(PlayerStateData->Party[Script->Operand[2]]->RoleId, true);
 			PlayerStateData->Party[Script->Operand[2]]->FrameNum = PlayerStateData->PartyDirection * 3 + Script->Operand[1];
 		}
 		else
@@ -531,23 +532,16 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 
 	case 0x0021:
 		// Inflict damage to the enemy
-		/*TODO
 		if (Script->Operand[0])
 		{
 			// Inflict damage to all enemies
-			for (i = 0; i <= g_Battle.wMaxEnemyIndex; i++)
-			{
-				if (g_Battle.rgEnemy[i].wObjectID != 0)
-				{
-					g_Battle.rgEnemy[i].e.wHealth -= Script->Operand[1];
-				}
-			}
+			PlayerState->DamageAllEnemies(Script->Operand[1]);
 		}
 		else
 		{
 			// Inflict damage to one enemy
-			g_Battle.rgEnemy[EventObjectId].e.wHealth -= Script->Operand[1];
-		}*/
+			PlayerState->DamageEnemy(EventObjectId, Script->Operand[1]);
+		}
 		break;
 
 	case 0x0022:
@@ -628,99 +622,42 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 
 	case 0x0026:
 		// Show the buy item menu
-		PlayerController->Buy(Script->Operand[0]);
+		ScenePlayerController->Buy(Script->Operand[0]);
 		break;
 
 	case 0x0027:
 		// Show the sell item menu
-		PlayerController->Sell();
+		ScenePlayerController->Sell();
 		break;
 
 	case 0x0028:
-		//
 		// Apply poison to enemy
-		//
-		/*TODO
 		if (Script->Operand[0])
 		{
-			//
 			// Apply to everyone
-			//
-			for (i = 0; i <= g_Battle.wMaxEnemyIndex; i++)
+			for (SIZE_T i = 0; i < PlayerStateData->CurrentEnemies.Num(); i++)
 			{
-				w = g_Battle.rgEnemy[i].wObjectID;
-
-				if (w == 0)
+				UPALBattleEnemyData* EnemyData = PlayerStateData->CurrentEnemies[i];
+				uint16 ObjectId = EnemyData->GetObjectId();
+				if (FMath::RandRange(0, 9) >= GameStateData->Objects[ObjectId].Enemy.ResistanceToSorcery)
 				{
-					continue;
-				}
-
-				if (RandomLong(0, 9) >=
-					gpGlobals->g.rgObject[w].enemy.wResistanceToSorcery)
-				{
-					for (j = 0; j < MAX_POISONS; j++)
-					{
-						if (g_Battle.rgEnemy[i].rgPoisons[j].wPoisonID ==
-							Script->Operand[1])
-						{
-							break;
-						}
-					}
-
-					if (j >= MAX_POISONS)
-					{
-						for (j = 0; j < MAX_POISONS; j++)
-						{
-							if (g_Battle.rgEnemy[i].rgPoisons[j].wPoisonID == 0)
-							{
-								g_Battle.rgEnemy[i].rgPoisons[j].wPoisonID = Script->Operand[1];
-								g_Battle.rgEnemy[i].rgPoisons[j].wPoisonScript =
-									PAL_RunTriggerScript(gpGlobals->g.rgObject[Script->Operand[1]].poison.wEnemyScript, EventObjectId);
-								break;
-							}
-						}
-					}
+					PlayerState->AddPoisonForEnemy(EventObjectId, Script->Operand[1]);
 				}
 			}
 		}
 		else
 		{
-			//
 			// Apply to one enemy
-			//
-			w = g_Battle.rgEnemy[EventObjectId].wObjectID;
-
-			if (RandomLong(0, 9) >=
-				gpGlobals->g.rgObject[w].enemy.wResistanceToSorcery)
+			uint16 ObjectId = PlayerStateData->CurrentEnemies[EventObjectId]->GetObjectId();
+			if (FMath::RandRange(0, 9) >= GameStateData->Objects[ObjectId].Enemy.ResistanceToSorcery)
 			{
-				for (j = 0; j < MAX_POISONS; j++)
-				{
-					if (g_Battle.rgEnemy[EventObjectId].rgPoisons[j].wPoisonID ==
-						Script->Operand[1])
-					{
-						break;
-					}
-				}
-
-				if (j >= MAX_POISONS)
-				{
-					for (j = 0; j < MAX_POISONS; j++)
-					{
-						if (g_Battle.rgEnemy[EventObjectId].rgPoisons[j].wPoisonID == 0)
-						{
-							g_Battle.rgEnemy[EventObjectId].rgPoisons[j].wPoisonID = Script->Operand[1];
-							g_Battle.rgEnemy[EventObjectId].rgPoisons[j].wPoisonScript =
-								PAL_RunTriggerScript(gpGlobals->g.rgObject[Script->Operand[1]].poison.wEnemyScript, EventObjectId);
-							break;
-						}
-					}
-				}
+				PlayerState->AddPoisonForEnemy(EventObjectId, Script->Operand[1]);
 			}
-		}*/
+		}
 		break;
 
 	case 0x0029:
-		// Apply poison to player
+		// Apply poison to role
 		if (Script->Operand[0])
 		{
 			// Apply to everyone
@@ -735,7 +672,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		}
 		else
 		{
-			// Apply to one player
+			// Apply to one role
 			if (FMath::RandRange(1, 100) > PlayerState->GetRolePoisonResistance(EventObjectId))
 			{
 				PlayerState->AddPoisonForRole(EventObjectId, Script->Operand[1]);
@@ -744,48 +681,20 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		break;
 
 	case 0x002A:
-		//
 		// Cure poison by object ID for enemy
-		//
-		/*TODO
 		if (Script->Operand[0])
 		{
-			//
 			// Apply to all enemies
-			//
-			for (i = 0; i <= g_Battle.wMaxEnemyIndex; i++)
+			for (SIZE_T i = 0; i < PlayerStateData->CurrentEnemies.Num(); i++)
 			{
-				if (g_Battle.rgEnemy[i].wObjectID == 0)
-				{
-					continue;
-				}
-
-				for (j = 0; j < MAX_POISONS; j++)
-				{
-					if (g_Battle.rgEnemy[i].rgPoisons[j].wPoisonID == Script->Operand[1])
-					{
-						g_Battle.rgEnemy[i].rgPoisons[j].wPoisonID = 0;
-						g_Battle.rgEnemy[i].rgPoisons[j].wPoisonScript = 0;
-						break;
-					}
-				}
+				PlayerState->CurePoisonForEnemyByKind(i, Script->Operand[1]);
 			}
 		}
 		else
 		{
-			//
 			// Apply to one enemy
-			//
-			for (j = 0; j < MAX_POISONS; j++)
-			{
-				if (g_Battle.rgEnemy[EventObjectId].rgPoisons[j].wPoisonID == Script->Operand[1])
-				{
-					g_Battle.rgEnemy[EventObjectId].rgPoisons[j].wPoisonID = 0;
-					g_Battle.rgEnemy[EventObjectId].rgPoisons[j].wPoisonScript = 0;
-					break;
-				}
-			}
-		}*/
+			PlayerState->CurePoisonForEnemyByKind(EventObjectId, Script->Operand[1]);
+		}
 		break;
 
 	case 0x002B:
@@ -795,12 +704,12 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 			for (UPALRoleData* PartyMember : PlayerStateData->Party)
 			{
 				SIZE_T RoleId = PartyMember->RoleId;
-				PlayerState->CurePoisonByKind(RoleId, Script->Operand[1]);
+				PlayerState->CurePoisonForRoleByKind(RoleId, Script->Operand[1]);
 			}
 		}
 		else
 		{
-			PlayerState->CurePoisonByKind(EventObjectId, Script->Operand[1]);
+			PlayerState->CurePoisonForRoleByKind(EventObjectId, Script->Operand[1]);
 		}
 		break;
 
@@ -811,46 +720,38 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 			for (UPALRoleData* PartyMember : PlayerStateData->Party)
 			{
 				SIZE_T RoleId = PartyMember->RoleId;
-				PlayerState->CurePoisonByLevel(RoleId, Script->Operand[1]);
+				PlayerState->CurePoisonForRoleByLevel(RoleId, Script->Operand[1]);
 			}
 		}
 		else
 		{
-			PlayerState->CurePoisonByLevel(EventObjectId, Script->Operand[1]);
+			PlayerState->CurePoisonForRoleByLevel(EventObjectId, Script->Operand[1]);
 		}
 		break;
 
 	case 0x002D:
 		// Set the status for player
-		PlayerState->SetRoleStatus(EventObjectId, static_cast<EPALRoleStatus>(Script->Operand[0]), Script->Operand[1]);
+		PlayerState->SetRoleStatus(EventObjectId, static_cast<EPALStatus>(Script->Operand[0]), Script->Operand[1]);
 		break;
 
 	case 0x002E:
-		//
 		// Set the status for enemy
-		//
-		/*TODO
-		w = g_Battle.rgEnemy[EventObjectId].wObjectID;
-
-#ifdef PAL_CLASSIC
-		i = 9;
-#else
-		i = ((Script->Operand[0] == kStatusSlow) ? 14 : 9);
-#endif
-
-		if (RandomLong(0, i) > gpGlobals->g.rgObject[w].enemy.wResistanceToSorcery)
+	{
+		uint16 ObjectId = PlayerStateData->CurrentEnemies[EventObjectId]->GetObjectId();
+		if (FMath::RandRange(0, 9) >= GameStateData->Objects[ObjectId].Enemy.ResistanceToSorcery)
 		{
-			g_Battle.rgEnemy[EventObjectId].rgwStatus[Script->Operand[0]] = Script->Operand[1];
+			PlayerStateData->CurrentEnemies[EventObjectId]->Status[Script->Operand[0]] = Script->Operand[1];
 		}
 		else
 		{
 			ScriptEntry = Script->Operand[2] - 1;
-		}*/
+		}
 		break;
+	}
 
 	case 0x002F:
 		// Remove player's status
-		PlayerState->RemoveRoleStatus(EventObjectId, static_cast<EPALRoleStatus>(Script->Operand[0]));
+		PlayerState->RemoveRoleStatus(EventObjectId, static_cast<EPALStatus>(Script->Operand[0]));
 		break;
 
 	case 0x0030:
@@ -879,19 +780,15 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		break;
 
 	case 0x0033:
-		//
 		// collect the enemy for items
-		//
-		/*TODO
-		if (g_Battle.rgEnemy[EventObjectId].e.wCollectValue != 0)
+		if (PlayerStateData->CurrentEnemies[EventObjectId]->Enemy.CollectValue != 0)
 		{
-			gpGlobals->wCollectValue +=
-				g_Battle.rgEnemy[EventObjectId].e.wCollectValue;
+			PlayerStateData->CollectValue += PlayerStateData->CurrentEnemies[EventObjectId]->Enemy.CollectValue;
 		}
 		else
 		{
 			ScriptEntry = Script->Operand[0] - 1;
-		}*/
+		}
 		break;
 
 	case 0x0034:
@@ -972,7 +869,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		{
 			ShakeLevel = 4;
 		}
-		GameMode->ShakeScreen(Script->Operand[0] * FRAME_TIME, ShakeLevel);
+		SceneGameMode->ShakeScreen(Script->Operand[0] * FRAME_TIME, ShakeLevel);
 	}
 	break;
 
@@ -998,7 +895,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 
 	case 0x0038:
 		// Teleport the party out of the scene
-		if (!GameStateData->bInBattle &&
+		if (!PlayerStateData->bInBattle &&
 			GameStateData->Scenes[GameStateData->SceneNum - 1].ScriptOnTeleport != 0)
 		{
 			RunTriggerScript(GameStateData->Scenes[GameStateData->SceneNum - 1].ScriptOnTeleport, UPALScriptManager::LastTriggeredEventObjectId, false);
@@ -1090,7 +987,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 
 	case 0x0045:
 		// Set battle music
-		// TODO gpGlobals->wNumBattleMusic = Script->Operand[0];
+		PlayerStateData->BattleMusicNum = Script->Operand[0];
 		break;
 
 	case 0x0046:
@@ -1099,7 +996,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		double XOffset = ((PlayerStateData->PartyDirection == EPALDirection::West || PlayerStateData->PartyDirection == EPALDirection::South) ? 16 : -16);
 		double YOffset = ((PlayerStateData->PartyDirection == EPALDirection::West || PlayerStateData->PartyDirection == EPALDirection::North) ? 16 : -16);
 
-		double Z = PlayerController->GetPartyPosition().Z;
+		double Z = ScenePlayerController->GetPartyPosition().Z;
 		double X = Script->Operand[0] * 32 + Script->Operand[2] * 16;
 		double Y = Script->Operand[1] * 32 + Script->Operand[2] * 16 + Z * SQRT_3;
 
@@ -1164,7 +1061,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 
 	case 0x004A:
 		// Set the current battlefield
-		// TODO gpGlobals->wNumBattleField = Script->Operand[0];
+		PlayerStateData->BattleFieldNum = Script->Operand[0];
 		break;
 
 	case 0x004B:
@@ -1188,7 +1085,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 			Speed = 4;
 		}
 
-		GameState->MonsterChasePlayer(EventObjectId, Speed, MaxDistance, static_cast<bool>(Script->Operand[2]), PlayerController);
+		GameState->MonsterChasePlayer(EventObjectId, Speed, MaxDistance, static_cast<bool>(Script->Operand[2]), ScenePlayerController);
 	}
 	break;
 
@@ -1203,7 +1100,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		// Load the last saved game
 		ScriptRunner = GetWorld()->SpawnActor<APALTimedFadeScriptRunner>();
 		Cast<APALTimedFadeScriptRunner>(ScriptRunner)->Init(false, 1);
-		GameMode->ReloadInNextTick(PlayerState->CurrentSaveSlot);
+		SceneGameMode->ReloadInNextTick(PlayerState->CurrentSaveSlot);
 		return nullptr; // don't go further
 
 	case 0x004F:
@@ -1297,7 +1194,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		{
 			// Set data to load the scene in the next frame
 			GameStateData->SceneNum = Script->Operand[0];
-			GameMode->LoadScene();
+			SceneGameMode->LoadScene();
 			PlayerStateData->Layer = 0;
 		}
 		break;
@@ -1309,15 +1206,15 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		break;
 
 	case 0x005B:
-		//
 		// Halve the enemy's HP
-		//
-		/*TODO w = g_Battle.rgEnemy[EventObjectId].e.wHealth / 2 + 1;
-		if (w > Script->Operand[0])
+	{
+		uint16 HalfHP = PlayerStateData->CurrentEnemies[EventObjectId]->Enemy.Health / 2 + 1;
+		if (HalfHP > Script->Operand[0])
 		{
-			w = Script->Operand[0];
+			HalfHP = Script->Operand[0];
 		}
-		g_Battle.rgEnemy[EventObjectId].e.wHealth -= w;*/
+		PlayerStateData->CurrentEnemies[EventObjectId]->Enemy.Health -= HalfHP;
+	}
 		break;
 
 	case 0x005C:
@@ -1400,10 +1297,10 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 	case 0x0065:
 		// Set the player's sprite
 		PlayerStateData->PlayerRoles.SpriteNum[Script->Operand[0]] = Script->Operand[1];
-		if (!GameStateData->bInBattle && Script->Operand[2])
+		if (!PlayerStateData->bInBattle && Script->Operand[2])
 		{
-			PlayerController->PartyStopWalking();
-			PlayerController->ReloadRoleSprites();
+			ScenePlayerController->PartyStopWalking();
+			ScenePlayerController->ReloadRoleSprites();
 		}
 		break;
 
@@ -1490,14 +1387,14 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 	case 0x006E:
 		// Move the player to the specified position in one step
 	{
-		const FPALPosition3d& PartyPosition = PlayerController->GetPartyPosition();
+		const FPALPosition3d& PartyPosition = ScenePlayerController->GetPartyPosition();
 		double X = PartyPosition.X + static_cast<int16>(Script->Operand[0]);
 		double Y = PartyPosition.Y + static_cast<int16>(Script->Operand[1] * 2);
 
 		PlayerStateData->Layer = Script->Operand[2] * 8;
 		if (Script->Operand[0] != 0 || Script->Operand[1] != 0)
 		{
-			PlayerController->PartyWalkTo(FPALPosition3d(X, Y, PartyPosition.Z));
+			ScenePlayerController->PartyWalkTo(FPALPosition3d(X, Y, PartyPosition.Z));
 		}
 	}
 	break;
@@ -1518,7 +1415,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 
 	case 0x0071:
 		// Wave the screen
-		GameMode->WaveScreen(Script->Operand[0], static_cast<int16>(Script->Operand[1]) / FRAME_TIME);
+		SceneGameMode->WaveScreen(Script->Operand[0], static_cast<int16>(Script->Operand[1]) / FRAME_TIME);
 		break;
 
 	case 0x0073:
@@ -1550,20 +1447,20 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		{
 			PlayerStateData->LastPartyRoleId[i] = PlayerStateData->Party[i]->RoleId;
 		}
-		const FPALPosition3d& Position = PlayerController->GetPartyPosition();
-		PlayerController->RemoveAllPartyRoles();
+		const FPALPosition3d& Position = ScenePlayerController->GetPartyPosition();
+		ScenePlayerController->RemoveAllPartyRoles();
 		for (SIZE_T i = 0; i < 3; i++)
 		{
 			if (Script->Operand[i] != 0)
 			{
-				PlayerController->AddPartyRole(static_cast<SIZE_T>(Script->Operand[i] - 1));
+				ScenePlayerController->AddPartyRole(static_cast<SIZE_T>(Script->Operand[i] - 1));
 			}
 		}
 
 		if (PlayerStateData->Party.IsEmpty())
 		{
 			// HACK for Dream 2.11
-			PlayerController->AddPartyRole(0);
+			ScenePlayerController->AddPartyRole(0);
 		}
 
 		for (UPALRoleData* PartyMember : PlayerStateData->Party)
@@ -1572,7 +1469,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		}
 
 		// Reload the player sprites
-		GameMode->LoadRoleSprites();
+		SceneGameMode->LoadRoleSprites();
 
 		PlayerState->ClearAllRolePoisons();
 		PlayerState->UpdateEquipments();
@@ -1655,18 +1552,18 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		if (Script->Operand[0] == 0 && Script->Operand[1] == 0 || Script->Operand[2] == 0)
 		{
 			// Move the viewport back to normal state
-			PlayerController->CameraRestoreNormal();
+			ScenePlayerController->CameraRestoreNormal();
 		}
 		else if (Script->Operand[2] == 0xFFFF)
 		{
-			PlayerController->CameraMoveTo(FPALPosition3d(Script->Operand[0] * 32, Script->Operand[1] * 32, 0));
+			ScenePlayerController->CameraMoveTo(FPALPosition3d(Script->Operand[0] * 32, Script->Operand[1] * 32, 0));
 		}
 		else
 		{
 			int16 X = static_cast<int16>(Script->Operand[0]);
 			int16 Y = static_cast<int16>(Script->Operand[1]) * 2;
 			ScriptRunner = GetWorld()->SpawnActor<APALPanCameraScriptRunner>();
-			const FPALPosition3d& Viewport = PlayerController->GetViewport();
+			const FPALPosition3d& Viewport = ScenePlayerController->GetViewport();
  			Cast<APALPanCameraScriptRunner>(ScriptRunner)->Init(
 				FPALPosition3d(Viewport.X + X * Script->Operand[2], Viewport.Y + Y * Script->Operand[2], 0),
 				Script->Operand[2] * FRAME_TIME);
@@ -1696,7 +1593,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		double X = Current->X + ((PlayerStateData->PartyDirection == EPALDirection::West || PlayerStateData->PartyDirection == EPALDirection::South) ? 16 : -16);
 		double Y = Current->Y * 2 + ((PlayerStateData->PartyDirection == EPALDirection::West || PlayerStateData->PartyDirection == EPALDirection::North) ? 16 : -16);
 
-		FPALPosition3d PartyPosition = PlayerController->GetPartyPosition();
+		FPALPosition3d PartyPosition = ScenePlayerController->GetPartyPosition();
 
 		if (FMath::Abs(X - PartyPosition.X) + FMath::Abs(Y - PartyPosition.Y) < Script->Operand[1] * 32 + 16 
 			&& GameStateData->EventObjects[Script->Operand[0] - 1].State > 0)
@@ -1753,7 +1650,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		}
 
 		{
-			FPALPosition3d Position = PlayerController->GetPartyPosition();
+			FPALPosition3d Position = ScenePlayerController->GetPartyPosition();
 			Position.X += ((PlayerStateData->PartyDirection == EPALDirection::West || PlayerStateData->PartyDirection == EPALDirection::South) ? -16 : 16);
 			Position.Y += ((PlayerStateData->PartyDirection == EPALDirection::West || PlayerStateData->PartyDirection == EPALDirection::North) ? -16 : 16);
 			if (GetWorld()->GetSubsystem<UPALMapManager>()->CheckObstacle(Position, false))
@@ -1952,15 +1849,15 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 	case 0x0098:
 		// Set follower of the party
 	{
-		PlayerController->RemoveAllFollowerRoles();
+		ScenePlayerController->RemoveAllFollowerRoles();
 		for (SIZE_T i = 0; i < 2; i++)
 		{
 			if (Script->Operand[i] > 0)
 			{
-				PlayerController->AddFollowerRole(Script->Operand[i]);
+				ScenePlayerController->AddFollowerRole(Script->Operand[i]);
 			}
 		}
-		GameMode->LoadRoleSprites();
+		SceneGameMode->LoadRoleSprites();
 	}
 	break;
 
@@ -1969,7 +1866,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		if (Script->Operand[0] == 0xFFFF)
 		{
 			GameStateData->Scenes[GameStateData->SceneNum - 1].MapNum = Script->Operand[1];
-			GameMode->LoadScene();
+			SceneGameMode->LoadScene();
 		}
 		else
 		{
@@ -2223,7 +2120,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 
 	case 0x00A1:
 		// Set the positions of all party members to the same as the first one
-		PlayerController->PartyMoveClose();
+		ScenePlayerController->PartyMoveClose();
 		break;
 
 	case 0x00A2:

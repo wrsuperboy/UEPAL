@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
 #include "PALGameStateData.h"
-#include "PALPlayerController.h"
+#include "PALScenePlayerController.h"
 #include "PAL.h"
 #include "PALGameState.generated.h"
 
@@ -34,7 +34,7 @@ public:
 
 	bool NPCWalkTo(const uint16 EventObjectId, const FPALPosition3d& Position, const int32 Speed);
 
-	void MonsterChasePlayer(const uint16 EventObjectId, const int32 Speed, uint16 ChaseRange, bool bFloating, APALPlayerController* PlayerController);
+	void MonsterChasePlayer(const uint16 EventObjectId, const int32 Speed, uint16 ChaseRange, bool bFloating, APALScenePlayerController* PlayerController);
 
 	void SetDayNight(bool bNight);
 

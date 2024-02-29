@@ -6,13 +6,12 @@
 #include "PALGameInstance.h"
 #include "PALGameState.h"
 #include "PALPlayerState.h"
-#include "PALPlayerController.h"
+#include "PALScenePlayerController.h"
 #include "PALPlayerCameraManager.h"
 #include "PAL.h"
 
 APALGameModeBase::APALGameModeBase() : Super()
 {
-	PlayerControllerClass = APALPlayerController::StaticClass();
 	PlayerStateClass = APALPlayerState::StaticClass();
 	GameStateClass = APALGameState::StaticClass();
 }

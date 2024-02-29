@@ -30,21 +30,21 @@ void APALRideEventObjectScriptRunner::TickRun(float DeltaTime)
 	if (AccTime > FRAME_TIME)
 	{
 		AccTime = 0;
-		const FPALPosition3d& PartyPosition = PlayerController->GetPartyPosition();
+		const FPALPosition3d& PartyPosition = ScenePlayerController->GetPartyPosition();
 		double XOffset = Destination.X - PartyPosition.X;
 		double YOffset = Destination.Y - PartyPosition.Y;
 		double ZOffset = Destination.Z - PartyPosition.Z;
 
 		if (FMath::IsNearlyZero(XOffset) && FMath::IsNearlyZero(YOffset) && FMath::IsNearlyZero(ZOffset))
 		{
-			PlayerController->PartySetWalking();
+			ScenePlayerController->PartySetWalking();
 			MarkCompeted(true);
 			return;
 		}
 
-		PlayerController->PartyStopWalking();
+		ScenePlayerController->PartyStopWalking();
 		float RealSpeed = Speed * 2 * FMath::Sqrt(3.) * PIXEL_TO_UNIT / FRAME_TIME;
-		PlayerController->PartySetSpeed(RealSpeed);
+		ScenePlayerController->PartySetSpeed(RealSpeed);
 		EventObject->SetSpeed(RealSpeed);
 
 		if (YOffset < 0)
@@ -60,7 +60,7 @@ void APALRideEventObjectScriptRunner::TickRun(float DeltaTime)
 		double DY = (FMath::Abs(YOffset) > Speed * 2) ? (Speed * (YOffset < 0 ? -2 : 2)) : YOffset;
 		double DZ = (FMath::Abs(ZOffset) > Speed * 2) ? (Speed * (ZOffset < 0 ? -2 : 2)) : ZOffset;
 
-		PlayerController->PartyMoveTo(FPALPosition3d(PartyPosition.X + DX, PartyPosition.Y + DY, PartyPosition.Z + DZ));
+		ScenePlayerController->PartyMoveTo(FPALPosition3d(PartyPosition.X + DX, PartyPosition.Y + DY, PartyPosition.Z + DZ));
 		const FPALPosition3d& EventObjectPosition = EventObject->GetPosition();
 		EventObject->MoveTo(FPALPosition3d(EventObjectPosition.X + DX, EventObjectPosition.Y + DY, EventObjectPosition.Z + DZ));
 	}

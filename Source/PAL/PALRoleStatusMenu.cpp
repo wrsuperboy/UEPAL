@@ -10,7 +10,7 @@
 #include "Components/Border.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
-#include "PALPlayerController.h"
+#include "PALScenePlayerController.h"
 #include "PALPlayerState.h"
 #include "PALPlayerStateData.h"
 #include "PALGameInstance.h"
@@ -39,7 +39,7 @@ void UPALRoleStatusMenu::NativeConstruct()
 	BoxSlot->SetAutoSize(true);
 
 	RoleSelectMenu = CreateWidget<UPALRoleSelectMenu>(GetOwningPlayer(), UPALRoleSelectMenu::StaticClass());
-	APALPlayerState* PlayerState = Cast<APALPlayerController>(GetOwningPlayer())->GetPlayerState<APALPlayerState>();
+	APALPlayerState* PlayerState = GetOwningPlayer()->GetPlayerState<APALPlayerState>();
 	for (UPALRoleData* RoleData : PlayerState->GetPlayerStateData()->Party)
 	{
 		RoleSelectMenu->AddPartyRole(RoleData->RoleId, PlayerState, true);

@@ -42,9 +42,9 @@ public:
 
 	void AddPoisonForRole(const SIZE_T RoleId, const uint16 PoisonId);
 
-	void CurePoisonByKind(const SIZE_T RoleId, const uint16 PoisonId);
+	void CurePoisonForRoleByKind(const SIZE_T RoleId, const uint16 PoisonId);
 
-	void CurePoisonByLevel(const SIZE_T RoleId, const uint16 MaxLevel);
+	void CurePoisonForRoleByLevel(const SIZE_T RoleId, const uint16 MaxLevel);
 
 	bool IsRolePoisonedByLevel(const SIZE_T RoleId, const uint16 MinLevel);
 
@@ -68,11 +68,11 @@ public:
 
 	uint16 GetRoleElementalResistance(const SIZE_T RoleId, SIZE_T AttributeNum);
 
-	void SetRoleStatus(const SIZE_T RoleId, const EPALRoleStatus Status, const uint16 RoundNum);
+	void SetRoleStatus(const SIZE_T RoleId, const EPALStatus Status, const uint16 RoundNum);
 
-	void RemoveRoleStatus(const SIZE_T RoleId, const EPALRoleStatus Status);
+	void RemoveRoleStatus(const SIZE_T RoleId, const EPALStatus Status);
 
-	bool IsRoleInStatus(const SIZE_T RoleId, const EPALRoleStatus Status);
+	bool IsRoleInStatus(const SIZE_T RoleId, const EPALStatus Status);
 
 	void ClearAllRoleStatus();
 
@@ -99,6 +99,24 @@ public:
 	bool Revive(const SIZE_T RoleId, double HPRatio);
 
 	bool ReviveAll(double HPRatio);
+
+	void StartBattle(const SIZE_T EnemyTeamNum, const bool bIsBoss);
+
+	SIZE_T GetRoleBattleSpriteNum(const SIZE_T RoleId);
+
+	void DamageEnemy(const SIZE_T EnemyIndex, const int32 Damage);
+
+	void DamageAllEnemies(const int32 Damage);
+
+	void AddPoisonForEnemy(const SIZE_T EnemyIndex, const int16 PoisonId);
+
+	void CurePoisonForEnemyByKind(const SIZE_T EnemyIndex, const uint16 PoisonId);
+
+	bool IsRoleDying(const SIZE_T RoleId);
+
+	uint16 GetEnemyDexterity(const SIZE_T EnemyIndex);
+
+	uint16 GetRoleActualDexterity(const SIZE_T RoleId);
 
 private:
 	UPALPlayerStateData* LoadDefaultGame() const;

@@ -36,6 +36,4 @@ public:
 	FObject Objects[MAX_OBJECTS];
 
 	FEventObject EventObjects[MAX_EVENT_OBJECTS];
-
-	bool bInBattle;
 };

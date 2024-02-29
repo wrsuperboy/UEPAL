@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "PALGameData.h"
 #include "PALGameModeBase.h"
-#include "PALPlayerController.h"
+#include "PALScenePlayerController.h"
 #include "PALGameStateData.h"
 #include "PALPlayerStateData.h"
 #include "PALScriptRunnerBase.h"
@@ -35,7 +35,7 @@ private:
 	UPALGameStateData* GameStateData;
 
 	UPROPERTY()
-	APALPlayerController* PlayerController;
+	APlayerController* PlayerController;
 
 	UPROPERTY()
 	UPALPlayerStateData* PlayerStateData;
@@ -70,7 +70,7 @@ public:
 	// returns true if it has an immediate return
 	bool RunTriggerScript(uint16& InOutScriptEntry, const uint16 InEventObjectId, bool bRewriteScriptEntry, bool& bOutSuccess);
 
-	bool AllowNewTriggers();
+	bool AreNewTriggersAllowed();
 
 private:
 	bool RunTriggerScript();
