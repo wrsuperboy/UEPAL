@@ -1130,12 +1130,15 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 
 	case 0x0053:
 		// use the day palette
-		GameState->SetDayNight(false);
+		if (SceneGameMode)
+		{
+			SceneGameMode->SetDayNight(false);
+		}
 		break;
 
 	case 0x0054:
 		// use the night palette
-		GameState->SetDayNight(true);
+		SceneGameMode->SetDayNight(true);
 		break;
 
 	case 0x0055:
@@ -1194,6 +1197,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		{
 			// Set data to load the scene in the next frame
 			GameStateData->SceneNum = Script->Operand[0];
+			check(SceneGameMode);
 			SceneGameMode->LoadScene();
 			PlayerStateData->Layer = 0;
 		}
@@ -1415,6 +1419,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 
 	case 0x0071:
 		// Wave the screen
+		check(SceneGameMode);
 		SceneGameMode->WaveScreen(Script->Operand[0], static_cast<int16>(Script->Operand[1]) / FRAME_TIME);
 		break;
 
@@ -1469,6 +1474,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		}
 
 		// Reload the player sprites
+		check(SceneGameMode);
 		SceneGameMode->LoadRoleSprites();
 
 		PlayerState->ClearAllRolePoisons();
@@ -1574,7 +1580,8 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 
 	case 0x0080:
 		// Toggle day/night palette
-		GameState->SetDayNight(!GameStateData->bNightPalette);
+		check(SceneGameMode);
+		SceneGameMode->SetDayNight(!GameStateData->bNightPalette);
 		// TODO PAL_PaletteFade(gpGlobals->wNumPalette, GameStateData->bNightPalette, !(Script->Operand[0]));
 		break;
 
@@ -1730,7 +1737,8 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 
 	case 0x008B:
 		// change the current palette
-		GameState->SetTone(Script->Operand[0]);
+		check(SceneGameMode);
+		SceneGameMode->SetTone(Script->Operand[0]);
 		break;
 
 	case 0x008C:
@@ -1798,7 +1806,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 				{
 					g_Battle.rgPlayer[j].iColorShift = i * 2;
 				}
-				PAL_BattleDelay(1, 0, TRUE);
+				PAL_BattleDelay(1 * FRAME_TIME, 0, TRUE);
 			}
 			VIDEO_BackupScreen(g_Battle.lpSceneBuf);
 			PAL_BattleUpdateFighters();
@@ -1857,6 +1865,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 				ScenePlayerController->AddFollowerRole(Script->Operand[i]);
 			}
 		}
+		check(SceneGameMode);
 		SceneGameMode->LoadRoleSprites();
 	}
 	break;
@@ -1866,6 +1875,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		if (Script->Operand[0] == 0xFFFF)
 		{
 			GameStateData->Scenes[GameStateData->SceneNum - 1].MapNum = Script->Operand[1];
+			check(SceneGameMode);
 			SceneGameMode->LoadScene();
 		}
 		else
@@ -1980,11 +1990,11 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 				g_Battle.rgEnemy[j].pos = PAL_XY(x, y);
 			}
 
-			PAL_BattleDelay(1, 0, TRUE);
+			PAL_BattleDelay(1 * FRAME_TIME, 0, TRUE);
 		}
 
 		PAL_BattleUpdateFighters();
-		PAL_BattleDelay(1, 0, TRUE);*/
+		PAL_BattleDelay(1 * FRAME_TIME, 0, TRUE);*/
 		break;
 
 	case 0x009E:
@@ -1996,7 +2006,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		{
 			g_Battle.rgEnemy[EventObjectId].wCurrentFrame =
 				g_Battle.rgEnemy[EventObjectId].e.wIdleFrames + i;
-			PAL_BattleDelay(g_Battle.rgEnemy[EventObjectId].e.wActWaitFrames, 0, FALSE);
+			PAL_BattleDelay(g_Battle.rgEnemy[EventObjectId].e.wActWaitFrames * FRAME_TIME, 0, FALSE);
 		}
 
 		x = 0;
@@ -2059,7 +2069,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 			PAL_BattleFadeScene();
 
 			// avoid releasing gesture disappears before summon done
-			PAL_BattleDelay(2, 0, TRUE);
+			PAL_BattleDelay(2 * FRAME_TIME, 0, TRUE);
 
 			for (i = 0; i <= g_Battle.wMaxEnemyIndex; i++)
 			{
@@ -2094,7 +2104,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 			for (i = 0; i < 6; i++)
 			{
 				g_Battle.rgEnemy[EventObjectId].iColorShift = i;
-				PAL_BattleDelay(1, 0, FALSE);
+				PAL_BattleDelay(1 * FRAME_TIME, 0, FALSE);
 			}
 
 			g_Battle.rgEnemy[EventObjectId].iColorShift = 0;

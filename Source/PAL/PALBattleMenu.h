@@ -34,6 +34,9 @@ private:
 public:
 	void SetMenuState(EPALBattleMenuState NewState);
 
+	UFUNCTION()
+	void EndBattle();
+
 protected:
 	virtual void NativeConstruct() override;
 

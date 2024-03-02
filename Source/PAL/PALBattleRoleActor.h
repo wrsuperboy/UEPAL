@@ -33,12 +33,19 @@ private:
 
 	FPALPosition3d Position;
 
+	uint16 PreviousMP;
+
+	bool bHasText;
+
 public:
 	void Init(UPALRoleData* RoleData, APALPlayerState* PlayerState, const FPALPosition3d& InOriginalPosition);
 	
 	void SetDefending(bool bInDefending);
 
 	void RestorePosition();
+
+private:
+	void HandleStatChangeDisplay(float DeltaTime);
 
 protected:
 	// Called when the game starts or when spawned

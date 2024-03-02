@@ -300,32 +300,6 @@ void APALGameState::MonsterChasePlayer(const uint16 EventObjectId, const int32 S
 	NPCWalkOneStep(EventObjectId, MonsterSpeed);
 }
 
-void APALGameState::SetDayNight(bool bNight)
-{
-	if (GameStateData->bNightPalette == bNight)
-	{
-		return;
-	}
-	GameStateData->bNightPalette = bNight;
-	if (GameModeClass == APALSceneGameMode::StaticClass())
-	{
-		Cast<APALSceneGameMode>(AuthorityGameMode)->SetLight(GameStateData->PaletteNum, GameStateData->bNightPalette);
-	}
-}
-
-void APALGameState::SetTone(SIZE_T PaletteNum)
-{
-	if (GameStateData->PaletteNum == PaletteNum)
-	{
-		return;
-	}
-	GameStateData->PaletteNum = PaletteNum;
-	if (GameModeClass == APALSceneGameMode::StaticClass())
-	{
-		Cast<APALSceneGameMode>(AuthorityGameMode)->SetLight(GameStateData->PaletteNum, GameStateData->bNightPalette);
-	}
-}
-
 void APALGameState::ReceivedGameModeClass() {
 	Super::ReceivedGameModeClass();
 	GameStateData = GetGameInstance<UPALGameInstance>()->GetGameStateData();

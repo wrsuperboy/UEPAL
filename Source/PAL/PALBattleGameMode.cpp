@@ -36,6 +36,12 @@ bool APALBattleGameMode::IsEnemyCleared() const
 	return bEnemyCleared;
 }
 
+// Local test
+void APALBattleGameMode::ClearEnemies()
+{
+	bEnemyCleared = true;
+}
+
 void APALBattleGameMode::LoadBattleActors()
 {
 	// Load battle actors for roles
@@ -100,16 +106,178 @@ void APALBattleGameMode::BattleSettle()
 	UGameplayStatics::OpenLevel(this, TEXT("PAL_Scene"));
 }
 
+void APALBattleGameMode::BattleDelay(float Duration, bool bUpdateGesture)
+{
+	DelayTime += Duration;
+	for (TActorIterator<APALBattleEnemyActor> It(GetWorld(), APALBattleEnemyActor::StaticClass()); It; ++It)
+	{
+		APALBattleEnemyActor* EnemyActor = *It;
+		if (EnemyActor)
+		{
+			if (bUpdateGesture)
+			{
+				EnemyActor->ResumeGuesture();
+			}
+			else
+			{
+				EnemyActor->StopGuesture();
+			}
+		}
+	}
+}
+
 void APALBattleGameMode::BattleBackupStat()
 {
+	SIZE_T EnemyCount = MainPlayerStatePrivate->GetPlayerStateData()->CurrentEnemies.Num();
+	for (SIZE_T i = 0; i < EnemyCount; i++)
+	{
+		UPALBattleEnemyData* EnemyData = MainPlayerStatePrivate->GetPlayerStateData()->CurrentEnemies[i];
+		if (!EnemyData->IsKnockedOuted())
+		{
+			EnemiesPreviousHP[i] = EnemyData->Enemy.Health;
+		}
+	}
+
+	UPALPlayerStateData* PlayerStateData = MainPlayerStatePrivate->GetPlayerStateData();
+	for (UPALRoleData* RoleData : PlayerStateData->Party)
+	{
+		const SIZE_T RoleId = RoleData->RoleId;
+		RolesPreviousHP[RoleId] = PlayerStateData->PlayerRoles.HP[RoleId];
+		RolesPreviousMP[RoleId] = PlayerStateData->PlayerRoles.MP[RoleId];
+	}
 }
 
-void APALBattleGameMode::BattlePostActionCheck(bool bCheckRole)
+void APALBattleGameMode::BattlePostActionCheck(bool bCheckRoles)
 {
-}
+	bool bEnemyRemaining = false;
+	bool bFade = false;
+	UPALPlayerStateData* PlayerStateData = MainPlayerStatePrivate->GetPlayerStateData();
+	SIZE_T EnemyCount = PlayerStateData->CurrentEnemies.Num();
+	for (SIZE_T i = 0; i < EnemyCount; i++)
+	{
+		UPALBattleEnemyData* EnemyData = PlayerStateData->CurrentEnemies[i];
+		if (EnemyData->GetObjectId() == 0)
+		{
+			continue;
+		}
 
-void APALBattleGameMode::BattleDisplayStatChange() {
+		if (EnemyData->Enemy.Health <= 0)
+		{
+			// This enemy is KO'ed
+			PlayerStateData->ExpGainedInBattle += EnemyData->Enemy.Exp;
+			PlayerStateData->CashGainedInBattle += EnemyData->Enemy.Cash;
 
+			GetWorld()->GetSubsystem<UPALAudioManager>()->PlaySound(EnemyData->Enemy.DeathSound);
+			EnemyData->KnockOut();
+			bFade = true;
+
+			continue;
+		}
+
+		bEnemyRemaining = true;
+	}
+
+	if (!bEnemyRemaining)
+	{
+		bEnemyCleared = true;
+		MainPlayerControllerPrivate->BattleUIWait();
+	}
+
+	if (bCheckRoles && !PlayerStateData->bAutoBattle)
+	{
+		for (UPALRoleData* RoleData : PlayerStateData->Party)
+		{
+			const SIZE_T RoleId = RoleData->RoleId;
+			if (PlayerStateData->PlayerRoles.HP[RoleId] < RolesPreviousHP[RoleId] &&
+				PlayerStateData->PlayerRoles.HP[RoleId] == 0)
+			{
+				const SIZE_T CoveringRoleId = PlayerStateData->PlayerRoles.CoveredBy[RoleId];
+
+				for (UPALRoleData* RoleDataToFind : PlayerStateData->Party)
+				{
+					if (RoleDataToFind->RoleId == CoveringRoleId)
+					{
+						if (PlayerStateData->PlayerRoles.HP[CoveringRoleId] > 0 &&
+							PlayerStateData->RoleStatus[CoveringRoleId][EPALStatus::Sleep] == 0 &&
+							PlayerStateData->RoleStatus[CoveringRoleId][EPALStatus::Paralyzed] == 0 &&
+							PlayerStateData->RoleStatus[CoveringRoleId][EPALStatus::Confused] == 0
+						)
+						{
+							const uint16 CoveringRoleNameIndex = PlayerStateData->PlayerRoles.Name[CoveringRoleId];
+							UPALGameStateData* GameStateData = Cast<APALGameState>(GameState)->GetGameStateData();
+							if (GameStateData->Objects[CoveringRoleNameIndex].Player.ScriptOnFriendDeath != 0)
+							{
+								BattleDelay(10 * FRAME_TIME, true);
+
+								Result = EPALBattleResult::BattleResultPause;
+
+								GetWorld()->GetSubsystem<UPALScriptManager>()->RunTriggerScript(GameStateData->Objects[CoveringRoleNameIndex].Player.ScriptOnFriendDeath, CoveringRoleNameIndex, true);
+
+								Result = EPALBattleResult::BattleResultOnGoing;
+								return;
+							}
+						}
+						break;
+					}
+				}
+			}
+		}
+
+		for (UPALRoleData* RoleData : PlayerStateData->Party)
+		{
+			const SIZE_T RoleId = RoleData->RoleId;
+
+			if (PlayerStateData->RoleStatus[RoleId][EPALStatus::Sleep] != 0 ||
+				PlayerStateData->RoleStatus[RoleId][EPALStatus::Confused] != 0)
+			{
+				continue;
+			}
+
+			if (PlayerStateData->PlayerRoles.HP[RoleId] < RolesPreviousHP[RoleId])
+			{
+				if (PlayerStateData->PlayerRoles.HP[RoleId] > 0 && MainPlayerStatePrivate->IsRoleDying(RoleId) &&
+					RolesPreviousHP[RoleId] >= PlayerStateData->PlayerRoles.MaxHP[RoleId] / 5)
+				{
+					const SIZE_T CoveringRoleId = PlayerStateData->PlayerRoles.CoveredBy[RoleId];
+
+					if (PlayerStateData->RoleStatus[CoveringRoleId][EPALStatus::Sleep] != 0 ||
+						PlayerStateData->RoleStatus[CoveringRoleId][EPALStatus::Paralyzed] != 0 ||
+						PlayerStateData->RoleStatus[CoveringRoleId][EPALStatus::Confused] != 0)
+					{
+						continue;
+					}
+
+					const uint16 RoleNameIndex = PlayerStateData->PlayerRoles.Name[RoleId];
+
+					GetWorld()->GetSubsystem<UPALAudioManager>()->PlaySound(PlayerStateData->PlayerRoles.DyingSound[RoleId]);
+
+					for (UPALRoleData* RoleDataToFind : PlayerStateData->Party)
+					{
+						if (RoleDataToFind->RoleId == CoveringRoleId)
+						{
+							if (PlayerStateData->PlayerRoles.HP[CoveringRoleId] == 0)
+							{
+								continue;
+							}
+
+							UPALGameStateData* GameStateData = Cast<APALGameState>(GameState)->GetGameStateData();
+							if (GameStateData->Objects[RoleNameIndex].Player.ScriptOnDying != 0)
+							{
+								BattleDelay(10 * FRAME_TIME, true);
+
+								Result = EPALBattleResult::BattleResultPause;
+
+								GetWorld()->GetSubsystem<UPALScriptManager>()->RunTriggerScript(GameStateData->Objects[RoleNameIndex].Player.ScriptOnDying, RoleId, true);
+
+								Result = EPALBattleResult::BattleResultOnGoing;
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void APALBattleGameMode::BattleEnemyPerformAction(SIZE_T EnemyIndex) {
@@ -157,6 +325,26 @@ void APALBattleGameMode::BattleRoleCheckReady()
 	}
 }
 
+void APALBattleGameMode::DrawScreenMessage()
+{
+	//TODO	
+	//if (EventObjectId != 0)
+	//{
+	//	if (EventObjectId == 31) // HACKHACK: BATTLE_LABEL_ESCAPEFAIL
+	//	{
+	//		PAL_DrawText(PAL_GetWord(wObjectID), PAL_XY(130, 75), 15, TRUE, FALSE, FALSE);
+	//	}
+	//	else if ((int16)EventObjectId < 0)
+	//	{
+	//		PAL_DrawText(PAL_GetWord(-((int16)EventObjectId)), PAL_XY(170, 45), DESCTEXT_COLOR, TRUE, FALSE, FALSE);
+	//	}
+	//	else
+	//	{
+	//		PAL_DrawText(PAL_GetWord(wObjectID), PAL_XY(210, 50), 15, TRUE, FALSE, FALSE);
+	//	}
+	//}
+}
+
 void APALBattleGameMode::StartPlay()
 {
 	UPlayer* MainPlayer = GetGameInstance<UPALGameInstance>()->GetMainPlayer();
@@ -169,11 +357,13 @@ void APALBattleGameMode::StartPlay()
 	//LoadBattleBackground();
 	bBattleGroundInitialized = false;
 	MainPlayerControllerPrivate->SetViewTarget(GetWorld()->SpawnActor<APALBattleCameraActor>());
+	DelayTime = 0;
 
 	MainPlayerStatePrivate->GetPlayerStateData()->bInBattle = true;
 	Result = EPALBattleResult::BattleResultPreBattle;
-	bEnemyCleared = true; //TODO
+	bEnemyCleared = false;
 	bEnemyMoving = false;
+	HidingTime = 0;
 
 	MainPlayerControllerPrivate->Init();
 
@@ -185,6 +375,7 @@ void APALBattleGameMode::StartPlay()
 
 	GetWorld()->GetSubsystem<UPALAudioManager>()->PlayMusic(MainPlayerStatePrivate->GetPlayerStateData()->BattleMusicNum, true, 0);
 
+	// Run the pre-battle scripts for each enemies
 	for (SIZE_T i = 0; i < MainPlayerStatePrivate->GetPlayerStateData()->CurrentEnemies.Num(); i++)
 	{
 		UPALBattleEnemyData* EnemyData = MainPlayerStatePrivate->GetPlayerStateData()->CurrentEnemies[i];
@@ -195,6 +386,11 @@ void APALBattleGameMode::StartPlay()
 			break;
 		}
 	}
+
+	RolesPreviousHP.SetNumUninitialized(MAX_PLAYER_ROLES);
+	RolesPreviousMP.SetNumUninitialized(MAX_PLAYER_ROLES);
+	EnemiesPreviousHP.SetNumUninitialized(MainPlayerStatePrivate->GetPlayerStateData()->CurrentEnemies.Num());
+
 	if (Result == EPALBattleResult::BattleResultPreBattle)
 	{
 		Result = EPALBattleResult::BattleResultOnGoing;
@@ -222,6 +418,27 @@ void APALBattleGameMode::Tick(float DeltaTime)
 		Result = EPALBattleResult::BattleResultWon;
 		GetWorld()->GetSubsystem<UPALAudioManager>()->PlaySound(0);
 		return;
+	}
+
+	if (!FMath::IsNearlyZero(DelayTime))
+	{
+		if (DelayTime < DeltaTime)
+		{
+			DelayTime = 0;
+			for (TActorIterator<APALBattleEnemyActor> It(GetWorld(), APALBattleEnemyActor::StaticClass()); It; ++It)
+			{
+				APALBattleEnemyActor* EnemyActor = *It;
+				if (EnemyActor)
+				{
+					EnemyActor->ResumeGuesture();
+				}
+			}
+		}
+		else
+		{
+			DelayTime -= DeltaTime;
+			return;
+		}
 	}
 
 	bool bEnded = true;
@@ -481,7 +698,6 @@ void APALBattleGameMode::Tick(float DeltaTime)
 			}
 
 			BattlePostActionCheck(false);
-			BattleDisplayStatChange();
 
 			if (HidingTime > 0)
 			{
@@ -544,43 +760,43 @@ void APALBattleGameMode::Tick(float DeltaTime)
 					bEnemyMoving = false;
 				}
 			}
-			else if (BattleRoleMap.Find(i)->State == EPALFighterState::DoingMove)
-			{
+			else {
 				SIZE_T RoleId = MainPlayerStatePrivate->GetPlayerStateData()->Party[i]->RoleId;
-
-				if (PlayerStateData->PlayerRoles.HP[RoleId] == 0)
+				if (BattleRoleMap.Find(RoleId)->State == EPALFighterState::DoingMove)
 				{
-					if (PlayerStateData->RoleStatus[RoleId][EPALStatus::Puppet] == 0)
+					if (PlayerStateData->PlayerRoles.HP[RoleId] == 0)
+					{
+						if (PlayerStateData->RoleStatus[RoleId][EPALStatus::Puppet] == 0)
+						{
+							BattleRoleMap.Find(RoleId)->Action.ActionType = EBattleActionType::BattleActionPass;
+						}
+					}
+					else if (PlayerStateData->RoleStatus[RoleId][EPALStatus::Sleep] > 0 ||
+						PlayerStateData->RoleStatus[RoleId][EPALStatus::Paralyzed] > 0)
 					{
 						BattleRoleMap.Find(RoleId)->Action.ActionType = EBattleActionType::BattleActionPass;
 					}
-				}
-				else if (PlayerStateData->RoleStatus[RoleId][EPALStatus::Sleep] > 0 ||
-					PlayerStateData->RoleStatus[RoleId][EPALStatus::Paralyzed] > 0)
-				{
-					BattleRoleMap.Find(RoleId)->Action.ActionType = EBattleActionType::BattleActionPass;
-				}
-				else if (PlayerStateData->RoleStatus[RoleId][EPALStatus::Confused] > 0)
-				{
-					BattleRoleMap.Find(RoleId)->Action.ActionType =
-						(MainPlayerStatePrivate->IsRoleDying(RoleId) ? EBattleActionType::BattleActionPass : EBattleActionType::BattleActionAttackMate);
-				}
-				else if (BattleRoleMap.Find(RoleId)->Action.ActionType == EBattleActionType::BattleActionAttack &&
-					BattleRoleMap.Find(RoleId)->Action.ItemOrMagicId != 0)
-				{
-					bPreviousRoleAutoAttack = true;
-				}
-				else if (bPreviousRoleAutoAttack)
-				{
-					MainPlayerControllerPrivate->SetUISourceTargetAction(i, BattleRoleMap.Find(RoleId)->Action.Target, EBattleActionType::BattleActionAttack);
-					BattleCommitAction(false);
-				}
+					else if (PlayerStateData->RoleStatus[RoleId][EPALStatus::Confused] > 0)
+					{
+						BattleRoleMap.Find(RoleId)->Action.ActionType =
+							(MainPlayerStatePrivate->IsRoleDying(RoleId) ? EBattleActionType::BattleActionPass : EBattleActionType::BattleActionAttackMate);
+					}
+					else if (BattleRoleMap.Find(RoleId)->Action.ActionType == EBattleActionType::BattleActionAttack &&
+						BattleRoleMap.Find(RoleId)->Action.ItemOrMagicId != 0)
+					{
+						bPreviousRoleAutoAttack = true;
+					}
+					else if (bPreviousRoleAutoAttack)
+					{
+						MainPlayerControllerPrivate->SetUISourceTargetAction(i, BattleRoleMap.Find(RoleId)->Action.Target, EBattleActionType::BattleActionAttack);
+						BattleCommitAction(false);
+					}
 
-				// Perform the action for this player.
-				CurrentMovingRoleId = RoleId;
-				BattleRolePerformAction(RoleId);
+					// Perform the action for this player.
+					CurrentMovingRoleId = RoleId;
+					BattleRolePerformAction(RoleId);
+				}
 			}
-
 			ActionQueue.RemoveAt(0);
 		}
 	}

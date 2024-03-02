@@ -36,10 +36,6 @@ public:
 
 	void MonsterChasePlayer(const uint16 EventObjectId, const int32 Speed, uint16 ChaseRange, bool bFloating, APALScenePlayerController* PlayerController);
 
-	void SetDayNight(bool bNight);
-
-	void SetTone(SIZE_T PaletteNum);
-
 private:
 	UPALGameStateData* LoadDefaultGame() const;
 

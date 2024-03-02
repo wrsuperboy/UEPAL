@@ -29,6 +29,11 @@ void APALBattlePlayerController::BattleUIRoleReady(SIZE_T RoleId)
 {
 }
 
+void APALBattlePlayerController::BattleUIWait()
+{
+	UIStatus = EPALBattleUIStatus::BattleUIWait;
+}
+
 bool APALBattlePlayerController::IsAutoAttack() const
 {
 	return bAutoAttack;

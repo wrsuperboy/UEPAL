@@ -6,6 +6,7 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Button.h"
 #include "PALCommon.h"
+#include "PALBattleGameMode.h"
 
 UTexture2D* NewGrayscaleTexture(UTexture2D* Texture)
 {
@@ -58,6 +59,11 @@ void UPALBattleMenu::SetMenuState(EPALBattleMenuState NewState)
 {
 	MenuState = NewState;
 	SetVisibility(ESlateVisibility::HitTestInvisible);
+}
+
+void UPALBattleMenu::EndBattle()
+{
+	Cast<APALBattleGameMode>(GetWorld()->GetAuthGameMode())->ClearEnemies();
 }
 
 void UPALBattleMenu::NativeConstruct()
@@ -188,6 +194,14 @@ void UPALBattleMenu::NativeConstruct()
 	MiscMenuButtonSlot->SetAlignment(FVector2D(0, 0));
 	MiscMenuButtonSlot->SetAnchors(FAnchors(0, 1, 0, 1));
 	MiscMenuButtonSlot->SetPosition(FVector2D(27, -30) * UI_PIXEL_TO_UNIT);
+
+	UButton* EndBattleButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+	UCanvasPanelSlot* EndBattleButtonSlot = Canvas->AddChildToCanvas(EndBattleButton);
+	EndBattleButtonSlot->SetAnchors(FAnchors(0, 0, 0, 0));
+	EndBattleButtonSlot->SetAlignment(FVector2D(0, 0));
+	TScriptDelegate<> OnEndBattle;
+	OnEndBattle.BindUFunction(this, "EndBattle");
+	EndBattleButton->OnClicked.Add(OnEndBattle);
 }
 
 bool UPALBattleMenu::GoBack() {

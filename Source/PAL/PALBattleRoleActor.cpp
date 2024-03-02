@@ -2,8 +2,9 @@
 
 
 #include "PALBattleRoleActor.h"
-#include "PALCommon.h"
+#include "Components/TextRenderComponent.h"
 #include "PALBattleGameMode.h"
+#include "PALCommon.h"
 
 // Sets default values
 APALBattleRoleActor::APALBattleRoleActor()
@@ -14,6 +15,7 @@ APALBattleRoleActor::APALBattleRoleActor()
 	SpriteMeshComponent = CreateDefaultSubobject<UPALSpriteMeshComponent>(TEXT("SpriteMeshComponent"));
 	bDefending = false;
 	SetActorTickEnabled(false);
+	bHasText = false;
 }
 
 void APALBattleRoleActor::Init(UPALRoleData* RoleData, APALPlayerState* PlayerState, const FPALPosition3d& InOriginalPosition)
@@ -22,6 +24,7 @@ void APALBattleRoleActor::Init(UPALRoleData* RoleData, APALPlayerState* PlayerSt
     PlayerStatePrivate = PlayerState;
 	OriginalPosition = InOriginalPosition;
 	Position = InOriginalPosition;
+	PreviousMP = PlayerStatePrivate->GetPlayerStateData()->PlayerRoles.MP[RoleId];
 	// Load battle sprites for role
 	SIZE_T BattleSpriteNum = PlayerState->GetRoleBattleSpriteNum(RoleId);
 	UPALSprite* Sprite = GetGameInstance()->GetSubsystem<UPALCommon>()->GetBattleRoleSprite(BattleSpriteNum);
@@ -38,6 +41,56 @@ void APALBattleRoleActor::SetDefending(bool bInDefending)
 void APALBattleRoleActor::RestorePosition()
 {
 	Position = OriginalPosition;
+}
+
+void APALBattleRoleActor::HandleStatChangeDisplay(float DeltaTime)
+{
+	int16 IncreasedMP = static_cast<int16>(PlayerStatePrivate->GetPlayerStateData()->PlayerRoles.MP[RoleId]) - PreviousMP;
+	PreviousMP = PlayerStatePrivate->GetPlayerStateData()->PlayerRoles.MP[RoleId];
+	if (IncreasedMP > 0)
+	{
+		// Only show MP increasing
+		double ZOffset = 67 * SQRT_3 / 2 * PIXEL_TO_UNIT;
+
+		UTextRenderComponent* TextComponent = NewObject<UTextRenderComponent>(this, UStaticMeshComponent::StaticClass());
+		TextComponent->SetupAttachment(RootComponent);
+		TextComponent->SetRelativeLocation(FVector3d(0, 0, ZOffset));
+		TextComponent->SetText(FText::FromString(FString::FromInt(IncreasedMP)));
+		TextComponent->SetTextRenderColor(FColor(80, 184, 148, 255));
+		TextComponent->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
+		TextComponent->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextTop);
+		TextComponent->RegisterComponent();
+		bHasText = true;
+	}
+
+	if (bHasText)
+	{
+		TArray<UTextRenderComponent*> TextRenderComponents;
+		GetComponents(TextRenderComponents);
+		for (UTextRenderComponent* TextRenderComponent : TextRenderComponents) {
+			if (TextRenderComponent->GetRelativeLocation().Z > (67 + 16) * SQRT_3 / 2 * PIXEL_TO_UNIT)
+			{
+				TextRenderComponent->DestroyComponent();
+				if (TextRenderComponents.Num() == 1)
+				{
+					bHasText = false;
+				}
+				continue;
+			}
+
+			TextRenderComponent->SetRelativeLocation(TextRenderComponent->GetRelativeLocation() + FVector3d(0, 0, 1 * SQRT_3 / 2 * PIXEL_TO_UNIT / 0.04f * DeltaTime));
+			FColor& CurrentColor = TextRenderComponent->TextRenderColor;
+			const uint8 AlphaToDeduct = 16 * DeltaTime / 0.04f;
+			if (CurrentColor.A < AlphaToDeduct)
+			{
+				CurrentColor.A = 0;
+			}
+			else
+			{
+				CurrentColor.A -= AlphaToDeduct;
+			}
+		}
+	}
 }
 
 // Called when the game starts or when spawned
@@ -123,5 +176,7 @@ void APALBattleRoleActor::Tick(float DeltaTime)
 	}
 
 	SpriteMeshComponent->SetFrame(FrameNum);
+
+	HandleStatChangeDisplay(DeltaTime);
 }
 

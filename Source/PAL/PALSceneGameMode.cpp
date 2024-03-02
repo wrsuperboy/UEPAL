@@ -160,39 +160,26 @@ EPALBattleResult APALSceneGameMode::StartBattle(const SIZE_T EnenyTeamNum, const
 	return EPALBattleResult::BattleResultPreBattle;
 }
 
-void APALSceneGameMode::SetLight(SIZE_T PaletteNum, bool bNightPalette)
+void APALSceneGameMode::SetDayNight(bool bNight)
 {
-	ADirectionalLight* DirectionalLight = nullptr;
-	for (TActorIterator<ADirectionalLight> It(GetWorld(), ADirectionalLight::StaticClass()); It; ++It)
+	UPALGameStateData* GameStateData = Cast<APALGameState>(GameState)->GetGameStateData();
+	if (GameStateData->bNightPalette == bNight)
 	{
-		DirectionalLight = *It;
-		break;
+		return;
 	}
-	if (DirectionalLight)
-	{
-		const TArray<FColor>& DefaultPalette = GetGameInstance()->GetSubsystem<UPALCommon>()->GetDefaultPalette();
-		const TArray<FColor>& NewPalette = GetGameInstance()->GetSubsystem<UPALCommon>()->GetPalette(PaletteNum, bNightPalette);
-		
-		FLinearColor DefaultColor(EForceInit::ForceInitToZero);
-		for (const FColor& Color : DefaultPalette)
-		{
-			DefaultColor += Color;
-		}
-		DefaultColor /= DefaultPalette.Num();
-		FLinearColor NewColor(EForceInit::ForceInitToZero);
-		for (const FColor& Color : NewPalette)
-		{
-			NewColor += Color;
-		}
-		NewColor /= NewPalette.Num();
+	GameStateData->bNightPalette = bNight;
+	SetLight(GameStateData->PaletteNum, GameStateData->bNightPalette);
+}
 
-		FLinearColor NewLightColor = FLinearColor::White * NewColor / DefaultColor;
-		check(!NewLightColor.IsAlmostBlack());
-		DirectionalLight->SetLightColor(NewLightColor);
-		DirectionalLight->SetBrightness(100
-			* NewLightColor.GetLuminance() / FLinearColor::White.GetLuminance()
-			* NewColor.GetLuminance() / DefaultColor.GetLuminance());
+void APALSceneGameMode::SetTone(SIZE_T PaletteNum)
+{
+	UPALGameStateData* GameStateData = Cast<APALGameState>(GameState)->GetGameStateData();
+	if (GameStateData->PaletteNum == PaletteNum)
+	{
+		return;
 	}
+	GameStateData->PaletteNum = PaletteNum;
+	SetLight(GameStateData->PaletteNum, GameStateData->bNightPalette);
 }
 
 void APALSceneGameMode::WaveScreen(uint32 ScreenWave, float InScreenWaveProgression)
@@ -261,16 +248,20 @@ void APALSceneGameMode::TryRestoreGame()
 {
 	// Restore roles
 	MainPlayerControllerPrivate->ReloadRoles();
+	UPALGameStateData* GameStateData = Cast<APALGameState>(GameState)->GetGameStateData();
+	// Restore light
+	SetLight(GameStateData->PaletteNum, GameStateData->bNightPalette);
 	// Restore screen wave
-	WaveScreen(Cast<APALGameState>(GameState)->GetGameStateData()->ScreenWave, 0.);
+	WaveScreen(GameStateData->ScreenWave, 0.);
 	// Restore unfinished trigger script
 	if (MainPlayerStatePrivate->GetPlayerStateData()->bHasTriggerScriptToRun)
 	{
-		MainPlayerStatePrivate->GetPlayerStateData()->bHasTriggerScriptToRun = false;
-		GetWorld()->GetSubsystem<UPALScriptManager>()->RunTriggerScript(MainPlayerStatePrivate->GetPlayerStateData()->ScriptEntryToRun, MainPlayerStatePrivate->GetPlayerStateData()->EventObjectIdToRun, false);
+		UPALPlayerStateData* PlayerStateData = MainPlayerStatePrivate->GetPlayerStateData();
+		PlayerStateData->bHasTriggerScriptToRun = false;
+		GetWorld()->GetSubsystem<UPALScriptManager>()->RunTriggerScript(PlayerStateData->ScriptEntryToRun, PlayerStateData->EventObjectIdToRun, false);
 	}
 	// Restore map & event objects
-	GetWorld()->GetSubsystem<UPALMapManager>()->LoadMap(GetGameState<APALGameState>()->GetGameStateData()->SceneNum, GetWorld());
+	GetWorld()->GetSubsystem<UPALMapManager>()->LoadMap(GameStateData->SceneNum, GetWorld());
 }
 void APALSceneGameMode::ScreenEffects(const float DeltaTime)
 {
@@ -295,6 +286,41 @@ void APALSceneGameMode::ScreenEffects(const float DeltaTime)
 			MainPlayerControllerPrivate->PlayerCameraManager->StopAllInstancesOfCameraShake(UPALCameraShake::StaticClass());
 			bScreenShaking = false;
 		}
+	}
+}
+
+void APALSceneGameMode::SetLight(SIZE_T PaletteNum, bool bNightPalette)
+{
+	ADirectionalLight* DirectionalLight = nullptr;
+	for (TActorIterator<ADirectionalLight> It(GetWorld(), ADirectionalLight::StaticClass()); It; ++It)
+	{
+		DirectionalLight = *It;
+		break;
+	}
+	if (DirectionalLight)
+	{
+		const TArray<FColor>& DefaultPalette = GetGameInstance()->GetSubsystem<UPALCommon>()->GetDefaultPalette();
+		const TArray<FColor>& NewPalette = GetGameInstance()->GetSubsystem<UPALCommon>()->GetPalette(PaletteNum, bNightPalette);
+
+		FLinearColor DefaultColor(EForceInit::ForceInitToZero);
+		for (const FColor& Color : DefaultPalette)
+		{
+			DefaultColor += Color;
+		}
+		DefaultColor /= DefaultPalette.Num();
+		FLinearColor NewColor(EForceInit::ForceInitToZero);
+		for (const FColor& Color : NewPalette)
+		{
+			NewColor += Color;
+		}
+		NewColor /= NewPalette.Num();
+
+		FLinearColor NewLightColor = FLinearColor::White * NewColor / DefaultColor;
+		check(!NewLightColor.IsAlmostBlack());
+		DirectionalLight->SetLightColor(NewLightColor);
+		DirectionalLight->SetBrightness(100
+			* NewLightColor.GetLuminance() / FLinearColor::White.GetLuminance()
+			* NewColor.GetLuminance() / DefaultColor.GetLuminance());
 	}
 }
 

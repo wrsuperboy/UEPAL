@@ -72,6 +72,8 @@ public:
 
 	void BattleUIRoleReady(SIZE_T RoleId);
 
+	void BattleUIWait();
+
 	bool IsAutoAttack() const;
 
 	bool IsRepeat() const;

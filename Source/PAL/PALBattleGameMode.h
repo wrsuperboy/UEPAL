@@ -72,6 +72,12 @@ private:
 
 	TMap<SIZE_T, EPALFighterState> EnemyIndexFighterStateMap;
 
+	TArray<uint16> RolesPreviousHP;
+
+	TArray<uint16> RolesPreviousMP;
+
+	TArray<uint16> EnemiesPreviousHP;
+
 	SIZE_T CurrentMovingRoleId;
 
 	bool bEnemyCleared;
@@ -86,12 +92,17 @@ private:
 
 	bool bThisTurnCooperation;
 
+	float DelayTime;
+
 	TArray<FBattleActionQueueItem> ActionQueue;
 
 	float HidingTime;
 
 public:
 	bool IsEnemyCleared() const;
+
+	// Local test
+	void ClearEnemies();
 
 private:
 	void LoadBattleActors();
@@ -100,11 +111,11 @@ private:
 
 	void BattleSettle();
 
+	void BattleDelay(float Duration, bool bUpdateGesture);
+
 	void BattleBackupStat();
 
-	void BattlePostActionCheck(bool bCheckRole);
-
-	void BattleDisplayStatChange();
+	void BattlePostActionCheck(bool bCheckRoles);
 
 	void BattleEnemyPerformAction(SIZE_T EnemyIndex);
 
@@ -113,6 +124,8 @@ private:
 	void BattleRolePerformAction(SIZE_T RoleId);
 
 	void BattleRoleCheckReady();
+
+	void DrawScreenMessage();
 
 public:
 	virtual void StartPlay() override;

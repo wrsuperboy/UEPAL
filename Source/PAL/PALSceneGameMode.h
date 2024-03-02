@@ -54,7 +54,9 @@ public:
 
 	EPALBattleResult StartBattle(const SIZE_T EnenyTeamNum, const bool bIsBoss);
 
-	void SetLight(SIZE_T PaletteNum, bool bNightPalette);
+	void SetDayNight(bool bNight);
+
+	void SetTone(SIZE_T PaletteNum);
 
 	void WaveScreen(uint32 ScreenWave, float InScreenWaveProgression);
 
@@ -68,6 +70,8 @@ private:
 	void TryRestoreGame();
 
 	void ScreenEffects(const float DeltaTime);
+
+	void SetLight(SIZE_T PaletteNum, bool bNightPalette);
 	
 public:
 	virtual void RestartPlayer(AController* NewPlayer) override;

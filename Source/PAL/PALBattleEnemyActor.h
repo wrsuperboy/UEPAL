@@ -35,8 +35,21 @@ private:
 
 	float AnimationAccumulatedTime;
 
+	bool bStopGuesture;
+
+	uint16 PreviousHP;
+
+	bool bHasText;
+
 public:
 	void Init(UPALBattleEnemyData* BattleEnemyData, uint16 InEnemyId, const FPALPosition3d& InOriginalPosition);
+
+	void StopGuesture();
+
+	void ResumeGuesture();
+
+private:
+	void HandleDamageDisplay(float DeltaTime);
 
 protected:
 	// Called when the game starts or when spawned

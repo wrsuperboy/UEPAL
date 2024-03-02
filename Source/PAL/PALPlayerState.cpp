@@ -364,20 +364,13 @@ SIZE_T APALPlayerState::CountItem(const uint16 ObjectId)
 	}
 
 	// Search for the specified item in the inventory
-	SIZE_T Index = 0;
 	SIZE_T Count = 0;
-	while (Index < MAX_INVENTORY)
+	for (const FInventoryItem& InventoryItem : PlayerStateData->Inventory)
 	{
-		if (PlayerStateData->Inventory[Index].Item == ObjectId)
-		{
-			Count = PlayerStateData->Inventory[Index].Amount;
+		if (InventoryItem.Item == ObjectId) {
+			Count = InventoryItem.Amount;
 			break;
 		}
-		else if (PlayerStateData->Inventory[Index].Item == 0)
-		{
-			break;
-		}
-		Index++;
 	}
 
 	for (UPALRoleData* PartyMember : PlayerStateData->Party)

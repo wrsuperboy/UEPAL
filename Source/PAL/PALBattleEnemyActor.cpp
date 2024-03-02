@@ -2,6 +2,7 @@
 
 
 #include "PALBattleEnemyActor.h"
+#include "Components/TextRenderComponent.h"
 #include "PALCommon.h"
 #include "PALGameInstance.h"
 
@@ -16,6 +17,8 @@ APALBattleEnemyActor::APALBattleEnemyActor()
 	SetActorTickEnabled(false);
 	CurrentFrameNum = 0;
 	AnimationAccumulatedTime = 0;
+	bStopGuesture = false;
+	bHasText = false;
 }
 
 void APALBattleEnemyActor::Init(UPALBattleEnemyData* BattleEnemyData, uint16 InEnemyId, const FPALPosition3d& InOriginalPosition)
@@ -25,11 +28,80 @@ void APALBattleEnemyActor::Init(UPALBattleEnemyData* BattleEnemyData, uint16 InE
 	Position = InOriginalPosition;
 	// Load battle sprites for enemy
 	EnemyId = InEnemyId;
+	PreviousHP = BattleEnemyData->Enemy.Health;
 	UPALSprite* Sprite = GetGameInstance()->GetSubsystem<UPALCommon>()->GetBattleEnemySprite(EnemyId);
 	SpriteMeshComponent->SetSprite(Sprite);
 	SpriteMeshComponent->SetLocationOffset(FVector3d(0, BattleEnemyData->Enemy.YPosOffset * 2 * PIXEL_TO_UNIT, 0));
 	SetActorLocation(Position.toLocation());
 	SetActorTickEnabled(true);
+}
+
+void APALBattleEnemyActor::StopGuesture()
+{
+	bStopGuesture = true;
+}
+
+void APALBattleEnemyActor::ResumeGuesture()
+{
+	bStopGuesture = false;
+}
+
+void APALBattleEnemyActor::HandleDamageDisplay(float DeltaTime)
+{
+	if (bHasText)
+	{
+		TArray<UTextRenderComponent*> TextRenderComponents;
+		GetComponents(TextRenderComponents);
+		for (UTextRenderComponent* TextRenderComponent : TextRenderComponents) {
+			if (TextRenderComponent->GetRelativeLocation().Z > (115 + 16) * SQRT_3 / 2 * PIXEL_TO_UNIT)
+			{
+				TextRenderComponent->DestroyComponent();
+				if (TextRenderComponents.Num() == 1)
+				{
+					bHasText = false;
+				}
+				continue;
+			}
+
+			TextRenderComponent->SetRelativeLocation(TextRenderComponent->GetRelativeLocation() + FVector3d(0, 0, 1 * SQRT_3 / 2 * PIXEL_TO_UNIT / 0.04f * DeltaTime));
+			FColor& CurrentColor = TextRenderComponent->TextRenderColor;
+			const uint8 AlphaToDeduct = 16 * DeltaTime / 0.04f;
+			if (CurrentColor.A < AlphaToDeduct)
+			{
+				CurrentColor.A = 0;
+			}
+			else
+			{
+				CurrentColor.A -= AlphaToDeduct;
+			}
+		}
+	}
+
+	int16 Damage = static_cast<int16>(BattleEnemyDataPrivate->Enemy.Health) - PreviousHP;
+	if (Damage != 0)
+	{
+		PreviousHP = BattleEnemyDataPrivate->Enemy.Health;
+		// Show the number of damage
+		double ZOffset = 115 * SQRT_3 / 2 * PIXEL_TO_UNIT;
+
+		UTextRenderComponent* TextComponent = NewObject<UTextRenderComponent>(this, UStaticMeshComponent::StaticClass());
+		TextComponent->SetupAttachment(RootComponent);
+		TextComponent->SetRelativeLocation(FVector3d(0, 0, ZOffset));
+		if (Damage < 0)
+		{
+			TextComponent->SetText(FText::FromString(FString::FromInt(-Damage)));
+			TextComponent->SetTextRenderColor(FColor(80, 184, 148, 255));
+		}
+		else
+		{
+			TextComponent->SetText(FText::FromString(FString::FromInt(Damage)));
+			TextComponent->SetTextRenderColor(FColor(212, 200, 168, 255));
+		}
+		TextComponent->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
+		TextComponent->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextTop);
+		TextComponent->RegisterComponent();
+		bHasText = true;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -46,28 +118,31 @@ void APALBattleEnemyActor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	Position = OriginalPosition;
 
-	if (BattleEnemyDataPrivate->Status[EPALStatus::Sleep] > 0 ||
-		BattleEnemyDataPrivate->Status[EPALStatus::Paralyzed] > 0)
+	if (!bStopGuesture)
 	{
-		CurrentFrameNum = 0;
-		AnimationAccumulatedTime = 0;
-	}
-	else
-	{
-		AnimationAccumulatedTime += DeltaTime;
-		if (AnimationAccumulatedTime > FRAME_TIME)
+		if (BattleEnemyDataPrivate->Status[EPALStatus::Sleep] > 0 ||
+			BattleEnemyDataPrivate->Status[EPALStatus::Paralyzed] > 0)
 		{
+			CurrentFrameNum = 0;
 			AnimationAccumulatedTime = 0;
-			if (--(BattleEnemyDataPrivate->Enemy.IdleAnimSpeed) == 0)
+		}
+		else
+		{
+			AnimationAccumulatedTime += DeltaTime;
+			if (AnimationAccumulatedTime > FRAME_TIME)
 			{
-				CurrentFrameNum++;
-				BattleEnemyDataPrivate->Enemy.IdleAnimSpeed =
-					GetGameInstance<UPALGameInstance>()->GetGameData()->Enemies[EnemyId].IdleAnimSpeed;
-			}
+				AnimationAccumulatedTime = 0;
+				if (--(BattleEnemyDataPrivate->Enemy.IdleAnimSpeed) == 0)
+				{
+					CurrentFrameNum++;
+					BattleEnemyDataPrivate->Enemy.IdleAnimSpeed =
+						GetGameInstance<UPALGameInstance>()->GetGameData()->Enemies[EnemyId].IdleAnimSpeed;
+				}
 
-			if (CurrentFrameNum >= BattleEnemyDataPrivate->Enemy.IdleFrames)
-			{
-				CurrentFrameNum = 0;
+				if (CurrentFrameNum >= BattleEnemyDataPrivate->Enemy.IdleFrames)
+				{
+					CurrentFrameNum = 0;
+				}
 			}
 		}
 	}
@@ -97,4 +172,6 @@ void APALBattleEnemyActor::Tick(float DeltaTime)
 	}
 
 	SpriteMeshComponent->SetFrame(CurrentFrameNum);
+
+	HandleDamageDisplay(DeltaTime);
 }
