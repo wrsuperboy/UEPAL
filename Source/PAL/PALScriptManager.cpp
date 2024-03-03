@@ -1806,7 +1806,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 				{
 					g_Battle.rgPlayer[j].iColorShift = i * 2;
 				}
-				PAL_BattleDelay(1 * FRAME_TIME, 0, TRUE);
+				PAL_BattleDelay(1 * BATTLE_FRAME_TIME, 0, TRUE);
 			}
 			VIDEO_BackupScreen(g_Battle.lpSceneBuf);
 			PAL_BattleUpdateFighters();
@@ -1990,11 +1990,11 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 				g_Battle.rgEnemy[j].pos = PAL_XY(x, y);
 			}
 
-			PAL_BattleDelay(1 * FRAME_TIME, 0, TRUE);
+			PAL_BattleDelay(1 * BATTLE_FRAME_TIME, 0, TRUE);
 		}
 
 		PAL_BattleUpdateFighters();
-		PAL_BattleDelay(1 * FRAME_TIME, 0, TRUE);*/
+		PAL_BattleDelay(1 * BATTLE_FRAME_TIME, 0, TRUE);*/
 		break;
 
 	case 0x009E:
@@ -2006,7 +2006,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 		{
 			g_Battle.rgEnemy[EventObjectId].wCurrentFrame =
 				g_Battle.rgEnemy[EventObjectId].e.wIdleFrames + i;
-			PAL_BattleDelay(g_Battle.rgEnemy[EventObjectId].e.wActWaitFrames * FRAME_TIME, 0, FALSE);
+			PAL_BattleDelay(g_Battle.rgEnemy[EventObjectId].e.wActWaitFrames * BATTLE_FRAME_TIME, 0, FALSE);
 		}
 
 		x = 0;
@@ -2069,7 +2069,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 			PAL_BattleFadeScene();
 
 			// avoid releasing gesture disappears before summon done
-			PAL_BattleDelay(2 * FRAME_TIME, 0, TRUE);
+			PAL_BattleDelay(2 * BATTLE_FRAME_TIME, 0, TRUE);
 
 			for (i = 0; i <= g_Battle.wMaxEnemyIndex; i++)
 			{
@@ -2104,7 +2104,7 @@ APALScriptRunnerBase* UPALScriptManager::InterpretInstruction(uint16& InOutScrip
 			for (i = 0; i < 6; i++)
 			{
 				g_Battle.rgEnemy[EventObjectId].iColorShift = i;
-				PAL_BattleDelay(1 * FRAME_TIME, 0, FALSE);
+				PAL_BattleDelay(1 * BATTLE_FRAME_TIME, 0, FALSE);
 			}
 
 			g_Battle.rgEnemy[EventObjectId].iColorShift = 0;

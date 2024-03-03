@@ -114,8 +114,6 @@ public:
 
 	bool IsRoleDying(const SIZE_T RoleId);
 
-	uint16 GetEnemyDexterity(const SIZE_T EnemyIndex);
-
 	uint16 GetRoleActualDexterity(const SIZE_T RoleId);
 
 private:

@@ -51,6 +51,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	UPALSprite* CachedUISprite;
 
+	UPROPERTY(VisibleAnywhere)
+	UPALSprite* CachedBattleEffectSprite;
+
 	EPALCodePage CodePage;
 
 	UPROPERTY()
@@ -104,6 +107,8 @@ public:
 	UPALSprite* GetBattleRoleSprite(const SIZE_T BattleRoleSpriteNum);
 
 	UPALSprite* GetBattleEnemySprite(const SIZE_T BattleEnemySpriteNum);
+
+	UPALSprite* GetBattleEffectSprite();
 
 private:
 	UPALMKF* LoadMKF(const FString& FileName) const;

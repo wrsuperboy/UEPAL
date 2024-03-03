@@ -7,12 +7,12 @@ public class PAL : ModuleRules
 	public PAL(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-	
+
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "DesktopPlatform", "Slate", "SlateCore", "AudioExtensions", "ProceduralMeshComponent", "Landscape" });
+		PrivateDependencyModuleNames.AddRange(new string[] { /*"DesktopPlatform",*/ "Slate", "SlateCore", "AudioExtensions", "ProceduralMeshComponent", "Landscape" });
 		
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");

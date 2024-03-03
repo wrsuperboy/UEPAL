@@ -12,10 +12,10 @@
 #include "PALGameInstance.h"
 #include "PALScriptManager.h"
 #include "PALBattleRoleActor.h"
-#include "PALBattleEnemyActor.h"
 #include "PALBattleCameraActor.h"
 #include "PALBattleGroundActor.h"
 #include "PALCommon.h"
+#include "PALBattle.h"
 
 const FPALPosition3d RolePosition[3][3] =
 {
@@ -29,6 +29,8 @@ APALBattleGameMode::APALBattleGameMode() : Super()
 	PlayerControllerClass = APALBattlePlayerController::StaticClass();
 	DefaultPawnClass = nullptr;
 	PrimaryActorTick.bCanEverTick = true;
+	RolesPreviousHP.SetNumUninitialized(MAX_PLAYER_ROLES);
+	RolesPreviousMP.SetNumUninitialized(MAX_PLAYER_ROLES);
 }
 
 bool APALBattleGameMode::IsEnemyCleared() const
@@ -62,6 +64,9 @@ void APALBattleGameMode::LoadBattleActors()
 	UPALGameData* GameData = GetGameInstance<UPALGameInstance>()->GetGameData();
 	UPALGameStateData* GameStateData = Cast<APALGameState>(GameState)->GetGameStateData();
 	SIZE_T EnemyCount = MainPlayerStatePrivate->GetPlayerStateData()->CurrentEnemies.Num();
+	EnemiesPreviousHP.SetNumUninitialized(EnemyCount);
+	EnemyActors.SetNumUninitialized(EnemyCount);
+	EnemiesFighterState.SetNumUninitialized(EnemyCount);
 	for (SIZE_T i = 0; i < EnemyCount; i++)
 	{
 		UPALBattleEnemyData* EnemyData = MainPlayerStatePrivate->GetPlayerStateData()->CurrentEnemies[i];
@@ -70,7 +75,8 @@ void APALBattleGameMode::LoadBattleActors()
 		FPALPosition3d Position(X, Y * 2, 0);
 		APALBattleEnemyActor* EnemyActor = GetWorld()->SpawnActor<APALBattleEnemyActor>();
 		EnemyActor->Init(EnemyData, GameStateData->Objects[EnemyData->GetObjectId()].Enemy.EnemyID, Position);
-		EnemyIndexFighterStateMap.Add(i, EPALFighterState::Waiting);
+		EnemyActors[i] = EnemyActor;
+		EnemiesFighterState[i] = EPALFighterState::Waiting;
 	}
 }
 
@@ -79,7 +85,7 @@ void APALBattleGameMode::LoadBattleBackground()
 	UTexture2D* Texture = GetGameInstance()->GetSubsystem<UPALCommon>()->GetBackgroundPicture(MainPlayerStatePrivate->GetPlayerStateData()->BattleFieldNum);
 	//APALBattleGroundActor* BattleGoundActor = GetWorld()->SpawnActor<APALBattleGroundActor>();
 	//BattleGoundActor->SetGroundTexture(Texture);
-	
+
 	for (TActorIterator<ALandscapeProxy> It(GetWorld(), ALandscapeProxy::StaticClass()); It; ++It)
 	{
 		ALandscapeProxy* Landscape = *It;
@@ -109,19 +115,15 @@ void APALBattleGameMode::BattleSettle()
 void APALBattleGameMode::BattleDelay(float Duration, bool bUpdateGesture)
 {
 	DelayTime += Duration;
-	for (TActorIterator<APALBattleEnemyActor> It(GetWorld(), APALBattleEnemyActor::StaticClass()); It; ++It)
+	for (APALBattleEnemyActor* EnemyActor : EnemyActors)
 	{
-		APALBattleEnemyActor* EnemyActor = *It;
-		if (EnemyActor)
+		if (bUpdateGesture)
 		{
-			if (bUpdateGesture)
-			{
-				EnemyActor->ResumeGuesture();
-			}
-			else
-			{
-				EnemyActor->StopGuesture();
-			}
+			EnemyActor->ResumeGuesture();
+		}
+		else
+		{
+			EnemyActor->StopGuesture();
 		}
 	}
 }
@@ -156,7 +158,7 @@ void APALBattleGameMode::BattlePostActionCheck(bool bCheckRoles)
 	for (SIZE_T i = 0; i < EnemyCount; i++)
 	{
 		UPALBattleEnemyData* EnemyData = PlayerStateData->CurrentEnemies[i];
-		if (EnemyData->GetObjectId() == 0)
+		if (EnemyData->IsKnockedOuted())
 		{
 			continue;
 		}
@@ -201,13 +203,13 @@ void APALBattleGameMode::BattlePostActionCheck(bool bCheckRoles)
 							PlayerStateData->RoleStatus[CoveringRoleId][EPALStatus::Sleep] == 0 &&
 							PlayerStateData->RoleStatus[CoveringRoleId][EPALStatus::Paralyzed] == 0 &&
 							PlayerStateData->RoleStatus[CoveringRoleId][EPALStatus::Confused] == 0
-						)
+							)
 						{
 							const uint16 CoveringRoleNameIndex = PlayerStateData->PlayerRoles.Name[CoveringRoleId];
 							UPALGameStateData* GameStateData = Cast<APALGameState>(GameState)->GetGameStateData();
 							if (GameStateData->Objects[CoveringRoleNameIndex].Player.ScriptOnFriendDeath != 0)
 							{
-								BattleDelay(10 * FRAME_TIME, true);
+								BattleDelay(10 * BATTLE_FRAME_TIME, true);
 
 								Result = EPALBattleResult::BattleResultPause;
 
@@ -263,7 +265,7 @@ void APALBattleGameMode::BattlePostActionCheck(bool bCheckRoles)
 							UPALGameStateData* GameStateData = Cast<APALGameState>(GameState)->GetGameStateData();
 							if (GameStateData->Objects[RoleNameIndex].Player.ScriptOnDying != 0)
 							{
-								BattleDelay(10 * FRAME_TIME, true);
+								BattleDelay(10 * BATTLE_FRAME_TIME, true);
 
 								Result = EPALBattleResult::BattleResultPause;
 
@@ -281,7 +283,42 @@ void APALBattleGameMode::BattlePostActionCheck(bool bCheckRoles)
 }
 
 void APALBattleGameMode::BattleEnemyPerformAction(SIZE_T EnemyIndex) {
+	BattleBackupStat();
 
+	UPALPlayerStateData* PlayerStateData = MainPlayerStatePrivate->GetPlayerStateData();
+	UPALBattleEnemyData* CurrentEnemyData = PlayerStateData->CurrentEnemies[EnemyIndex];
+	uint16 Magic = CurrentEnemyData->Enemy.Magic;
+
+	if (CurrentEnemyData->Status[EPALStatus::Sleep] > 0 ||
+		CurrentEnemyData->Status[EPALStatus::Paralyzed] > 0 ||
+		HidingTime > 0)
+	{
+		// Do nothing
+		return;
+	}
+
+	if (CurrentEnemyData->Status[EPALStatus::Confused] > 0)
+	{
+		SIZE_T TargetEnemyIndex = FMath::RandRange(0, PlayerStateData->CurrentEnemies.Num() - 1);
+		while (PlayerStateData->CurrentEnemies[TargetEnemyIndex]->IsKnockedOuted())
+		{
+			TargetEnemyIndex = FMath::RandRange(0, PlayerStateData->CurrentEnemies.Num() - 1);
+		}
+		if (TargetEnemyIndex == EnemyIndex)
+		{
+			return;
+		}
+		EnemyActors[EnemyIndex]->ConfusedToAttack(EnemyActors[TargetEnemyIndex]);
+		BattleDelay(11 * BATTLE_FRAME_TIME, true);
+		return;
+	}
+
+	const TArray<UPALRoleData*>& AliveParty =
+		PlayerStateData->Party.FilterByPredicate([PlayerStateData](const UPALRoleData* PartyMember) {
+			return PlayerStateData->PlayerRoles.HP[PartyMember->RoleId] != 0;
+		});
+	UPALRoleData* TargetRoleData = AliveParty[FMath::RandRange(0, AliveParty.Num() - 1)];
+	SIZE_T TargetRoleId = TargetRoleData->RoleId;
 }
 
 void APALBattleGameMode::BattleCommitAction(bool bRepeat) {
@@ -387,10 +424,6 @@ void APALBattleGameMode::StartPlay()
 		}
 	}
 
-	RolesPreviousHP.SetNumUninitialized(MAX_PLAYER_ROLES);
-	RolesPreviousMP.SetNumUninitialized(MAX_PLAYER_ROLES);
-	EnemiesPreviousHP.SetNumUninitialized(MainPlayerStatePrivate->GetPlayerStateData()->CurrentEnemies.Num());
-
 	if (Result == EPALBattleResult::BattleResultPreBattle)
 	{
 		Result = EPALBattleResult::BattleResultOnGoing;
@@ -425,13 +458,9 @@ void APALBattleGameMode::Tick(float DeltaTime)
 		if (DelayTime < DeltaTime)
 		{
 			DelayTime = 0;
-			for (TActorIterator<APALBattleEnemyActor> It(GetWorld(), APALBattleEnemyActor::StaticClass()); It; ++It)
+			for (APALBattleEnemyActor* EnemyActor : EnemyActors)
 			{
-				APALBattleEnemyActor* EnemyActor = *It;
-				if (EnemyActor)
-				{
-					EnemyActor->ResumeGuesture();
-				}
+				EnemyActor->ResumeGuesture();
 			}
 		}
 		else
@@ -471,7 +500,7 @@ void APALBattleGameMode::Tick(float DeltaTime)
 		if (MainPlayerControllerPrivate->GetUIStatus() == EPALBattleUIStatus::BattleUIWait)
 		{
 			bool bAllSelected = true;
-			for (UPALRoleData* RoleData : MainPlayerStatePrivate->GetPlayerStateData()->Party)
+			for (UPALRoleData* RoleData : PlayerStateData->Party)
 			{
 				uint16 RoleId = RoleData->RoleId;
 				// Don't select action for this role if it is KO'ed,
@@ -519,22 +548,22 @@ void APALBattleGameMode::Tick(float DeltaTime)
 
 				ActionQueue.Empty();
 
-				for (SIZE_T i = 0; i < MainPlayerStatePrivate->GetPlayerStateData()->CurrentEnemies.Num(); i++)
+				for (SIZE_T i = 0; i < PlayerStateData->CurrentEnemies.Num(); i++)
 				{
 					FBattleActionQueueItem Action;
 					Action.bIsEnemy = true;
 					Action.Index = i;
 					Action.bIsSecond = false;
-					Action.Dexterity = MainPlayerStatePrivate->GetEnemyDexterity(i);
+					Action.Dexterity = PlayerStateData->CurrentEnemies[i]->GetDexterity();
 					Action.Dexterity = static_cast<int16>(Action.Dexterity * FMath::RandRange(0.9, 1.1));
 
-					if (MainPlayerStatePrivate->GetPlayerStateData()->CurrentEnemies[i]->Enemy.DualMove)
+					if (PlayerStateData->CurrentEnemies[i]->Enemy.DualMove)
 					{
 						FBattleActionQueueItem Action2;
 						Action2.bIsEnemy = true;
 						Action2.Index = i;
 						Action2.bIsSecond = false;
-						Action2.Dexterity = MainPlayerStatePrivate->GetEnemyDexterity(i);
+						Action2.Dexterity = PlayerStateData->CurrentEnemies[i]->GetDexterity();
 						Action2.Dexterity = static_cast<int16>(Action2.Dexterity * FMath::RandRange(0.9, 1.1));
 
 						if (Action.Dexterity <= Action2.Dexterity)
@@ -712,13 +741,9 @@ void APALBattleGameMode::Tick(float DeltaTime)
 							RoleActor->SetActorHiddenInGame(false);
 						}
 					}
-					for (TActorIterator<APALBattleEnemyActor> It(GetWorld(), APALBattleEnemyActor::StaticClass()); It; ++It)
+					for (APALBattleEnemyActor* EnemyActor : EnemyActors)
 					{
-						APALBattleEnemyActor* EnemyActor = *It;
-						if (EnemyActor)
-						{
-							EnemyActor->SetActorHiddenInGame(false);
-						}
+						EnemyActor->SetActorHiddenInGame(false);
 					}
 				}
 			}

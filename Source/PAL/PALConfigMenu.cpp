@@ -15,8 +15,8 @@
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/Button.h"
-#include "DesktopPlatformModule.h"
-#include "IDesktopPlatform.h"
+//#include "DesktopPlatformModule.h"
+//#include "IDesktopPlatform.h"
 #include "PALGameInstance.h"
 
 void UPALConfigMenu::SelectGameResourcePath()
@@ -25,7 +25,7 @@ void UPALConfigMenu::SelectGameResourcePath()
 	FString DefaultFile = "default.txt";
 	FString SelectedFolderPath = "";
 
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	/*IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
 	if (DesktopPlatform)
 	{
 		FString OutFolderName;
@@ -43,7 +43,7 @@ void UPALConfigMenu::SelectGameResourcePath()
 			SelectedFolderPath = OutFolderName;
 			GameResourcePathText->SetText(FText::FromString(SelectedFolderPath));
 		}
-	}
+	}*/
 }
 
 void UPALConfigMenu::StartGame()

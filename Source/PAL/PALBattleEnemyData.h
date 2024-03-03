@@ -38,6 +38,14 @@ public:
 	void KnockOut();
 
 	bool IsKnockedOuted() const;
+
+	uint16 GetDexterity() const;
+
+	uint16 GetDefense() const;
+
+	uint16 GetAttackStrength() const;
+
+	uint16 GetPhysicalResistance() const;
 	
 private:
 	uint16 ObjectId;

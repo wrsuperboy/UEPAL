@@ -1037,7 +1037,6 @@ void APALPlayerState::AddPoisonForEnemy(const SIZE_T EnemyIndex, const int16 Poi
 {
 	UPALGameStateData* GameStateData = GetWorld()->GetGameState<APALGameState>()->GetGameStateData();
 	UPALBattleEnemyData* EnemyData = PlayerStateData->CurrentEnemies[EnemyIndex];
-	uint16 ObjectId = EnemyData->GetObjectId();
 	SIZE_T j;
 	for (j = 0; j < MAX_POISONS; j++)
 	{
@@ -1080,14 +1079,6 @@ void APALPlayerState::CurePoisonForEnemyByKind(const SIZE_T EnemyIndex, const ui
 bool APALPlayerState::IsRoleDying(const SIZE_T RoleId)
 {
 	return PlayerStateData->PlayerRoles.HP[RoleId] < FMath::Min(100, PlayerStateData->PlayerRoles.MaxHP[RoleId] / 5);
-}
-
-uint16 APALPlayerState::GetEnemyDexterity(const SIZE_T EnemyIndex)
-{
-	check(PlayerStateData->CurrentEnemies[EnemyIndex]->GetObjectId() != 0);
-	uint16 s = (PlayerStateData->CurrentEnemies[EnemyIndex]->Enemy.Level + 6) * 3;
-	s += PlayerStateData->CurrentEnemies[EnemyIndex]->Enemy.Dexterity;
-	return s;
 }
 
 uint16 APALPlayerState::GetRoleActualDexterity(const SIZE_T RoleId)

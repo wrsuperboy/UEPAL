@@ -67,7 +67,7 @@ void APALBattlePlayerController::SetAutoAttack(bool bInAutoAttack)
 		else
 		{
 			if (AutoAttackMessage->IsInViewport()) {
-				AutoAttackMessage->RemoveFromViewport();
+				AutoAttackMessage->RemoveFromParent();
 			}
 		}
 		bAutoAttack = bAutoAttack;

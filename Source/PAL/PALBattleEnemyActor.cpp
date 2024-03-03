@@ -3,8 +3,9 @@
 
 #include "PALBattleEnemyActor.h"
 #include "Components/TextRenderComponent.h"
-#include "PALCommon.h"
 #include "PALGameInstance.h"
+#include "PALCommon.h"
+#include "PALBattle.h"
 
 // Sets default values
 APALBattleEnemyActor::APALBattleEnemyActor()
@@ -14,9 +15,8 @@ APALBattleEnemyActor::APALBattleEnemyActor()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
 	SpriteMeshComponent = CreateDefaultSubobject<UPALSpriteMeshComponent>(TEXT("SpriteMeshComponent"));
 
-	SetActorTickEnabled(false);
 	CurrentFrameNum = 0;
-	AnimationAccumulatedTime = 0;
+	GestureAccumulatedTime = 0;
 	bStopGuesture = false;
 	bHasText = false;
 }
@@ -33,7 +33,7 @@ void APALBattleEnemyActor::Init(UPALBattleEnemyData* BattleEnemyData, uint16 InE
 	SpriteMeshComponent->SetSprite(Sprite);
 	SpriteMeshComponent->SetLocationOffset(FVector3d(0, BattleEnemyData->Enemy.YPosOffset * 2 * PIXEL_TO_UNIT, 0));
 	SetActorLocation(Position.toLocation());
-	SetActorTickEnabled(true);
+	InitialHeight = Sprite->GetFrame(0)->GetSizeY() * PIXEL_TO_UNIT;
 }
 
 void APALBattleEnemyActor::StopGuesture()
@@ -44,6 +44,33 @@ void APALBattleEnemyActor::StopGuesture()
 void APALBattleEnemyActor::ResumeGuesture()
 {
 	bStopGuesture = false;
+}
+
+void APALBattleEnemyActor::ConfusedToAttack(APALBattleEnemyActor* Target)
+{
+	FriendToAttack = Target;
+	AttackFriendPhase = EPALBattleActionPhase::Approaching;
+	AttackFriendApproachingTime = 3 * BATTLE_FRAME_TIME;
+}
+
+const FPALPosition3d& APALBattleEnemyActor::GetPosition() const
+{
+	return Position;
+}
+
+double APALBattleEnemyActor::GetInitialHeight() const
+{
+	return InitialHeight;
+}
+
+const UPALBattleEnemyData* APALBattleEnemyActor::GetEnemyData() const
+{
+	return BattleEnemyDataPrivate;
+}
+
+void APALBattleEnemyActor::TakeDamageAndAnimate(int16 Damage)
+{
+	BattleEnemyDataPrivate->Enemy.Health -= Damage;
 }
 
 void APALBattleEnemyActor::HandleDamageDisplay(float DeltaTime)
@@ -104,6 +131,67 @@ void APALBattleEnemyActor::HandleDamageDisplay(float DeltaTime)
 	}
 }
 
+void APALBattleEnemyActor::HandleConfusedAttacking(float DeltaTime)
+{
+	if (!FriendToAttack)
+	{
+		return;
+	}
+
+	if (AttackFriendPhase == EPALBattleActionPhase::Approaching)
+	{
+		if (!FMath::IsNearlyZero(AttackFriendApproachingTime))
+		{
+			double Weight;
+			if (AttackFriendApproachingTime > DeltaTime)
+			{
+				AttackFriendApproachingTime -= DeltaTime;
+				Weight = 0.5 * DeltaTime / BATTLE_FRAME_TIME;
+			}
+			else
+			{
+				AttackFriendApproachingTime = 0;
+				Weight = 0.5 * AttackFriendApproachingTime / BATTLE_FRAME_TIME;
+			}
+			const FPALPosition3d& NewPosition = FPALPosition3d((Position.X * Weight + FriendToAttack->GetPosition().X + Weight),
+				(Position.Y * Weight + FriendToAttack->GetPosition().Y + Weight),
+				(Position.Z * Weight + FriendToAttack->GetPosition().Z + Weight));
+			Position = NewPosition;
+		}
+		else
+		{
+			const FVector3d& BattleEffectLocation = FPALPosition3d((Position.X / 2 + FriendToAttack->GetPosition().X / 2),
+				FriendToAttack->GetPosition().Y,
+				(FriendToAttack->GetPosition().Z)).toLocation() + FVector(0, 20 * PIXEL_TO_UNIT, FriendToAttack->GetInitialHeight() / 3 / SQRT_3 * 2);
+			APALBattleEffectActor* BattleEffectActor = GetWorld()->SpawnActor<APALBattleEffectActor>(BattleEffectLocation, FRotator());
+			BattleEffectActor->Init(9, 12);
+			AttackFriendEffect = BattleEffectActor;
+			AttackFriendPhase = EPALBattleActionPhase::TakingEffect;
+		}
+	}
+	else if (AttackFriendPhase == EPALBattleActionPhase::TakingEffect)
+	{
+		if (!AttackFriendEffect || !AttackFriendEffect->IsValidLowLevelFast())
+		{
+			uint16 AttackStrength = BattleEnemyDataPrivate->GetAttackStrength();
+			uint16 Defense = FriendToAttack->GetEnemyData()->GetDefense();
+			int16 Damage = CalculateBaseDamage(AttackStrength, Defense) * 2 / FriendToAttack->GetEnemyData()->GetPhysicalResistance();
+
+			if (Damage <= 0)
+			{
+				Damage = 1;
+			}
+
+			FriendToAttack->TakeDamageAndAnimate(Damage);
+			AttackFriendPhase = PostMagic;
+		}
+	}
+	else if (AttackFriendPhase == EPALBattleActionPhase::PostMagic)
+	{
+		
+	}
+}
+
 // Called when the game starts or when spawned
 void APALBattleEnemyActor::BeginPlay()
 {
@@ -124,14 +212,14 @@ void APALBattleEnemyActor::Tick(float DeltaTime)
 			BattleEnemyDataPrivate->Status[EPALStatus::Paralyzed] > 0)
 		{
 			CurrentFrameNum = 0;
-			AnimationAccumulatedTime = 0;
+			GestureAccumulatedTime = 0;
 		}
 		else
 		{
-			AnimationAccumulatedTime += DeltaTime;
-			if (AnimationAccumulatedTime > FRAME_TIME)
+			GestureAccumulatedTime += DeltaTime;
+			if (GestureAccumulatedTime > BATTLE_FRAME_TIME)
 			{
-				AnimationAccumulatedTime = 0;
+				GestureAccumulatedTime = 0;
 				if (--(BattleEnemyDataPrivate->Enemy.IdleAnimSpeed) == 0)
 				{
 					CurrentFrameNum++;

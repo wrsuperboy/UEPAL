@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "PALGameModeBase.h"
 #include "PALBattlePlayerController.h"
+#include "PALBattleEnemyActor.h"
 #include "PALPlayerState.h"
 #include "PALBattleGameMode.generated.h"
 
@@ -58,10 +59,10 @@ public:
 	APALBattleGameMode();
 	
 private:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY()
 	APALBattlePlayerController* MainPlayerControllerPrivate;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY()
 	APALPlayerState* MainPlayerStatePrivate;
 
 	bool bBattleGroundInitialized;
@@ -70,11 +71,14 @@ private:
 
 	TMap<SIZE_T, FBattleRole> BattleRoleMap;
 
-	TMap<SIZE_T, EPALFighterState> EnemyIndexFighterStateMap;
-
 	TArray<uint16> RolesPreviousHP;
 
 	TArray<uint16> RolesPreviousMP;
+
+	TArray<EPALFighterState> EnemiesFighterState;
+
+	UPROPERTY(VisibleAnywhere)
+	TArray<APALBattleEnemyActor*> EnemyActors;
 
 	TArray<uint16> EnemiesPreviousHP;
 

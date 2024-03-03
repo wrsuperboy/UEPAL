@@ -430,6 +430,20 @@ UPALSprite* UPALCommon::GetBattleEnemySprite(const SIZE_T BattleEnemySpriteNum)
 	return UPALSprite::Create(Buffer, this);
 }
 
+UPALSprite* UPALCommon::GetBattleEffectSprite()
+{
+	if (!CachedBattleEffectSprite)
+	{
+		UPALMKF* MKF = LoadMKF(FString(TEXT("DATA")));
+		SIZE_T Size = MKF->GetChunkSize(10);
+		uint8* Buffer = (uint8*)FMemory::Malloc(Size);
+		MKF->ReadChunk(Buffer, Size, 10);
+		CachedBattleEffectSprite = UPALSprite::Create(Buffer, this);
+	}
+
+	return CachedBattleEffectSprite;
+}
+
 UPALMKF* UPALCommon::LoadMKF(const FString& FileName) const
 {
 	FString FileFullPath = FString(GameResourcePath).Append(FileName).Append(".mkf");
