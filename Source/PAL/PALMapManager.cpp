@@ -11,9 +11,10 @@
 
 UPALMapManager::UPALMapManager() : CurrentMapNum(0)
 {
+	Tiles = (uint32(*)[128][64][2])FMemory::Malloc(sizeof(uint32) * 128 * 64 * 2);
 }
 
-int32 GetMapTileTextureFrameNum(const uint32(&Tiles)[128][64][2], const SIZE_T Layer, const SIZE_T X, const SIZE_T Y, const SIZE_T H)
+int32 GetMapTileTextureFrameNum(uint32(&Tiles)[128][64][2], const SIZE_T Layer, const SIZE_T X, const SIZE_T Y, const SIZE_T H)
 {
 	// Check for invalid parameters.
 	check(X < 64 && Y < 128 && H < 2);
@@ -34,7 +35,7 @@ int32 GetMapTileTextureFrameNum(const uint32(&Tiles)[128][64][2], const SIZE_T L
 	}
 }
 
-int32 GetMapTileHeight(const uint32(&Tiles)[128][64][2], const SIZE_T Layer, const SIZE_T X, const SIZE_T Y, const SIZE_T H)
+int32 GetMapTileHeight(uint32(&Tiles)[128][64][2], const SIZE_T Layer, const SIZE_T X, const SIZE_T Y, const SIZE_T H)
 {
 	// Check for invalid parameters.
 	check(X < 64 && Y < 128 && H < 2);
@@ -54,9 +55,9 @@ void UPALMapManager::LoadMap(const SIZE_T SceneNum, UWorld* CurrentWorld)
 {
 	UPALGameStateData* GameStateData = GetWorld()->GetGameInstance<UPALGameInstance>()->GetGameStateData();
 	SIZE_T MapNum = GameStateData->Scenes[SceneNum - 1].MapNum;
-	
+
 	UPALSprite* TileSprite;
-	bool bSuccess = GetWorld()->GetGameInstance()->GetSubsystem<UPALCommon>()->GetMap(MapNum, Tiles, TileSprite);
+	bool bSuccess = GetWorld()->GetGameInstance()->GetSubsystem<UPALCommon>()->GetMap(MapNum, *Tiles, TileSprite);
 	if (!bSuccess)
 	{
 		return;
@@ -74,11 +75,11 @@ void UPALMapManager::LoadMap(const SIZE_T SceneNum, UWorld* CurrentWorld)
 			{
 				for (SIZE_T Y = 0; Y < 128; Y++)
 				{
-					int32 FrameNum = GetMapTileTextureFrameNum(Tiles, 0, X, Y, H);
+					int32 FrameNum = GetMapTileTextureFrameNum(*Tiles, 0, X, Y, H);
 					if (FrameNum >= 0)
 					{
 						UTexture2D* Texture = TileSprite->GetFrame(FrameNum);
-						int32 Z = GetMapTileHeight(Tiles, 0, X, Y, H);
+						int32 Z = GetMapTileHeight(*Tiles, 0, X, Y, H);
 						SceneActor->SetTile(X, Y, H, FPALPosition3d((double)X * 32 + (double)H * 16, (double)Y * 32 + (double)H * 16 + (double)Z * 8 * SQRT_3, (double)Z * 8), Texture);
 					}
 				}
@@ -91,11 +92,11 @@ void UPALMapManager::LoadMap(const SIZE_T SceneNum, UWorld* CurrentWorld)
 			{
 				for (SIZE_T Y = 0; Y < 128; Y++)
 				{
-					int32 FrameNum = GetMapTileTextureFrameNum(Tiles, 1, X, Y, H);
+					int32 FrameNum = GetMapTileTextureFrameNum(*Tiles, 1, X, Y, H);
 					if (FrameNum >= 0)
 					{
 						UTexture2D* Texture = TileSprite->GetFrame(FrameNum);
-						int32 Z = GetMapTileHeight(Tiles, 1, X, Y, H);
+						int32 Z = GetMapTileHeight(*Tiles, 1, X, Y, H);
 						SceneActor->AddDecorator(FPALPosition3d((double)X * 32 + (double)H * 16, (double)Y * 32 + (double)H * 16 + (double)Z * 8 * SQRT_3, (double)Z * 8), Texture);
 					}
 				}
@@ -111,7 +112,7 @@ void UPALMapManager::LoadMap(const SIZE_T SceneNum, UWorld* CurrentWorld)
 		EventObjectActor->SetActorTickEnabled(false);
 		EventObjectActor->Destroy();
 	}
-	EventObjectActors.Empty();
+	EventObjectActors.Reset();
 
 	// Load event objects
 	const uint16 IndexEnd = GameStateData->Scenes[SceneNum].EventObjectIndex;
@@ -170,7 +171,7 @@ bool UPALMapManager::CheckObstacle(const FPALPosition3d& Position, const bool bC
 		}
 	}
 
-	if (IsMapTileBlocked(Tiles, X, Y, H))
+	if (IsMapTileBlocked(*Tiles, X, Y, H))
 	{
 		return true;
 	}
@@ -188,7 +189,7 @@ bool UPALMapManager::CheckObstacle(const FPALPosition3d& Position, const bool bC
 				{
 					// Check for collision
 					const FPALPosition3d& EventObjectPosition = EventObjectActor->GetPosition();
-					if (FMath::Abs(EventObjectPosition.X - Position.X) 
+					if (FMath::Abs(EventObjectPosition.X - Position.X)
 						+ FMath::Abs(EventObjectPosition.Y - Position.Y) < 16)
 					{
 						return true;
@@ -215,4 +216,10 @@ bool UPALMapManager::ShouldCreateSubsystem(UObject* Outer) const
 void UPALMapManager::Initialize(FSubsystemCollectionBase& Collection)
 {
 	SceneActor = GetWorld()->SpawnActor<APALSceneActor>();
+}
+
+void UPALMapManager::FinishDestroy()
+{
+	FMemory::Free(Tiles);
+	Super::FinishDestroy();
 }

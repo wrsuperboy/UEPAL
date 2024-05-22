@@ -546,7 +546,7 @@ void APALBattleGameMode::Tick(float DeltaTime)
 				bPreviousTurnAutoAttack = MainPlayerControllerPrivate->IsAutoAttack();
 				bPreviousRoleAutoAttack = false;
 
-				ActionQueue.Empty();
+				ActionQueue.Reset();
 
 				for (SIZE_T i = 0; i < PlayerStateData->CurrentEnemies.Num(); i++)
 				{

@@ -13,8 +13,8 @@ To start working with this project, you'll need to follow a few simple steps:
 8. Select `Development Editor` as active solution configuration. Try debug the game in Menu > Debug > Start Debugging.
 
 Please note that:
-- This project is built on Unreal Engine 5.1, and may not be compatible with earlier or later versions of the engine.
+- This project is built on Unreal Engine 5.4, and may not be compatible with earlier or later versions of the engine.
 - This project is tested on PAL DOS and 95(98) versions. It may support other versions such as Dream. Please find legal copy of the game files. 
 
 ## Contribution
-While we welcome contributors to this project, please note that we **do not permit forking** of this project. If you would like to contribute, please submit pull request in accordance with our contribution guidelines (coming soon).
+While we welcome contributors to this project, please note that we **do not recommend forking** of this project. If you would like to contribute, please submit pull request in accordance with our contribution guidelines (coming soon).

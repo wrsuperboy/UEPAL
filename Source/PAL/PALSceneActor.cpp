@@ -42,6 +42,8 @@ void APALSceneActor::AddDecorator(const FPALPosition3d& Position, UTexture2D* Te
 	StaticMeshComponent->SetRelativeLocation(Position.toLocation() + FVector3d(0, Texture->GetSizeY() * PIXEL_TO_UNIT / 2 / 2. * 3., Texture->GetSizeY() * PIXEL_TO_UNIT / 2 / 2. * SQRT_3));
 	StaticMeshComponent->SetRelativeScale3D(FVector3d(Texture->GetSizeX() * PIXEL_TO_UNIT / 100., Texture->GetSizeY() * PIXEL_TO_UNIT / 100., 1.));
 	StaticMeshComponent->SetRelativeRotation(FRotator(0., 0., 60.));
+	StaticMeshComponent->SetCastShadow(false);
+	StaticMeshComponent->SetCastHiddenShadow(false);
 	StaticMeshComponent->RegisterComponent();
 	DecoratorMeshComponents.Add(StaticMeshComponent);
 }
@@ -52,7 +54,7 @@ void APALSceneActor::ClearDecorators()
 	{
 		DecoratorComponent->DestroyComponent();
 	}
-	DecoratorMeshComponents.Empty();
+	DecoratorMeshComponents.Reset();
 }
 
 // Called when the game starts or when spawned
@@ -77,6 +79,7 @@ void APALSceneActor::PreInitializeComponents()
 				StaticMeshComponent->SetRelativeLocation(FPALPosition3d((double)X * 32 + (double)H * 16, (double)Y * 32 + (double)H * 16, 0).toLocation());
 				StaticMeshComponent->SetMaterial(0, DynamicMaterial);
 				StaticMeshComponent->SetupAttachment(RootComponent);
+				StaticMeshComponent->SetCastShadow(false);
 				StaticMeshComponent->RegisterComponent();
 				TileComponents[X * 128 * 2 + Y * 2 + H] = StaticMeshComponent;
 			}

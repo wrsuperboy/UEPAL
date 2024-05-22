@@ -160,14 +160,18 @@ bool UPALAudioManager::ShouldCreateSubsystem(UObject* Outer) const
 
 void UPALAudioManager::Initialize(FSubsystemCollectionBase& Collection)
 {
-	MusicProcedural = NewObject<UPALMusicProcedural>(GetWorld());
-	FString MusicMKFPath = GetWorld()->GetGameInstance<UPALGameInstance>()->GetGameResourcePath();
-	MusicMKFPath.Append("Mus.mkf");
-	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-	IFileHandle* MusicFileHanlde = PlatformFile.OpenRead(*MusicMKFPath);
-	MusicProcedural->Load(MusicFileHanlde);
-	MusicAudioComponent = CreateSound2D(GetWorld(), MusicProcedural, 1.f, 1.f, 0.f, nullptr, false, false);
-	bIsSoundEnabled = true;
+	UPALGameInstance* GameInstance = GetWorld()->GetGameInstance<UPALGameInstance>();
+	if (GameInstance)
+	{
+		FString MusicMKFPath = GameInstance->GetGameResourcePath();
+		MusicMKFPath.Append("Mus.mkf");
+		IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+		IFileHandle* MusicFileHanlde = PlatformFile.OpenRead(*MusicMKFPath);
+		MusicProcedural = NewObject<UPALMusicProcedural>(GetWorld());
+		MusicProcedural->Load(MusicFileHanlde);
+		MusicAudioComponent = CreateSound2D(GetWorld(), MusicProcedural, 1.f, 1.f, 0.f, nullptr, false, false);
+		bIsSoundEnabled = true;
+	}
 }
 
 void UPALAudioManager::Deinitialize()

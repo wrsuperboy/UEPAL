@@ -31,7 +31,7 @@ void APALScenePlayerController::ReloadRoles()
 		RolePawn->SetActorTickEnabled(false);
 		RolePawn->Destroy();
 	}
-	RolePawns.Empty();
+	RolePawns.Reset();
 	UPALPlayerStateData* PlayerStateData = GetPlayerState<APALPlayerState>()->GetPlayerStateData();
 	APALRolePawn* MainRolePawn = nullptr;
 	for (UPALRoleData* PartyMember : PlayerStateData->Party)
@@ -140,7 +140,7 @@ void APALScenePlayerController::RemoveAllPartyRoles()
 		}
 	}
 	UPALPlayerStateData* PlayerStateData = GetPlayerState<APALPlayerState>()->GetPlayerStateData();
-	PlayerStateData->Party.Empty();
+	PlayerStateData->Party.Reset();
 }
 
 void APALScenePlayerController::RemoveAllFollowerRoles()

@@ -23,7 +23,7 @@ public:
 private:
 	SIZE_T CurrentMapNum;
 
-	uint32 Tiles[128][64][2];
+	uint32(*Tiles)[128][64][2];
 
 	UPROPERTY(VisibleAnywhere)
 	APALSceneActor* SceneActor;
@@ -41,5 +41,7 @@ public:
 	bool ShouldCreateSubsystem(UObject* Outer) const override;
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
+	virtual void FinishDestroy() override;
 	
 };

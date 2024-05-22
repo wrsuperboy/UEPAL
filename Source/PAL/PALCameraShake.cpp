@@ -2,7 +2,7 @@
 
 
 #include "PALCameraShake.h"
-#include "PerlinNoiseCameraShakePattern.h"
+#include "Shakes/PerlinNoiseCameraShakePattern.h"
 #include "PAL.h"
 
 UPALCameraShake::UPALCameraShake(const FObjectInitializer& ObjectInitializer) : UCameraShakeBase(ObjectInitializer)

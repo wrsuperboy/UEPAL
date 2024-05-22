@@ -119,7 +119,7 @@ void UPALItemSelectMenu::InitInternal()
 	UPALGameStateData* GameStateData = GetWorld()->GetGameState<APALGameState>()->GetGameStateData();
 	UPALCommon* Common = GetGameInstance()->GetSubsystem<UPALCommon>();
 
-	MenuItemList.Empty();
+	MenuItemList.Reset();
 	for (FInventoryItem& IventoryItem : Inventory)
 	{
 		bool bEquipped = IventoryItem.Amount == 0;

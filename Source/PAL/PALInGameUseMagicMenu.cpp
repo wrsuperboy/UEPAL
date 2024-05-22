@@ -57,7 +57,7 @@ void UPALInGameUseMagicMenu::RefreshMagic()
 	UPALGameStateData* GameStateData = GetWorld()->GetGameState<APALGameState>()->GetGameStateData();
 	UPALPlayerStateData* PlayerStateData = GetOwningPlayer()->GetPlayerState<APALPlayerState>()->GetPlayerStateData();
 	UPALCommon* Common = GetGameInstance()->GetSubsystem<UPALCommon>();
-	MenuItemList.Empty();
+	MenuItemList.Reset();
 	for (int32 i = 0; i < MAX_PLAYER_MAGICS; i++)
 	{
 		int16 Magic = PlayerStateData->PlayerRoles.Magics[i][SelectedRoleId];

@@ -32,7 +32,7 @@ void UPALRoleSelectMenu::AddPartyRole(SIZE_T RoleId, APALPlayerState* PlayerStat
 void UPALRoleSelectMenu::ClearRoles()
 {
 	ItemContainer->ClearChildren();
-	ItemList.Empty();
+	ItemList.Reset();
 }
 
 void UPALRoleSelectMenu::SelectRole(SIZE_T RoleId)

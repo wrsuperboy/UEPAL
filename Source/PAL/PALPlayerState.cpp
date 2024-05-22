@@ -976,7 +976,7 @@ void APALPlayerState::StartBattle(const SIZE_T EnemyTeamNum, const bool bIsBoss)
 		IventoryItem.InUseAmount = 0;
 	}
 
-	PlayerStateData->CurrentEnemies.Empty();
+	PlayerStateData->CurrentEnemies.Reset();
 	UPALGameData* GameData = GetGameInstance<UPALGameInstance>()->GetGameData();
 	UPALGameStateData* GameStateData = GetWorld()->GetGameState<APALGameState>()->GetGameStateData();
 	for (SIZE_T i = 0; i < MAX_ENEMIES_IN_TEAM; i++)
