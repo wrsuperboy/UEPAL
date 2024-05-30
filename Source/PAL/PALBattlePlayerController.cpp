@@ -15,6 +15,7 @@ void APALBattlePlayerController::Init()
 	PreviousEnemyTarget = -1;
 	BattleMenu = CreateWidget<UPALBattleMenu>(this, UPALBattleMenu::StaticClass());
 	BattleMenu->AddToViewport(0);
+	SetShowMouseCursor(true);
 	AutoAttackMessage = CreateWidget<UPALBattleAutoAttackMessage>(this, UPALBattleAutoAttackMessage::StaticClass());
 
 	bInit = true;

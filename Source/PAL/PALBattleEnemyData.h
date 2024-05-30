@@ -24,8 +24,6 @@ public:
 
 	FEnemy Enemy;
 
-	bool bKnockOuted;
-
 	uint16 Status[EPALStatus::_StatusCount];
 
 	FPoisonStatus PoisonStatus[MAX_POISONS];
@@ -49,4 +47,6 @@ public:
 	
 private:
 	uint16 ObjectId;
+
+	bool bKnockOuted;
 };

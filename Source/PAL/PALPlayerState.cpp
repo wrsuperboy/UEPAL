@@ -184,7 +184,7 @@ UPALPlayerStateData* APALPlayerState::LoadSavedGame(SIZE_T SaveSlot)
 	FMemory::Memzero(Data->EquipmentEffects, sizeof(Data->EquipmentEffects));
 	Data->bAutoBattle = false;
 	Data->CurrentEquipPart = -1;
-	for (SIZE_T i = 0; i < MAX_INVENTORY; i++)
+	for (SIZE_T i = 0; i < MAX_PLAYER_ROLES; i++)
 	{
 		Data->LastPartyRoleId[i] = s->Party[i].PlayerRole;
 	}
