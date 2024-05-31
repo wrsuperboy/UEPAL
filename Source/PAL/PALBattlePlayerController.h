@@ -32,6 +32,14 @@ enum EBattleActionType : uint8
 	BattleActionAttackMate,    // attack teammate (confused only)
 };
 
+struct FBattleAction
+{
+	EBattleActionType  ActionType;
+	uint16             ItemOrMagicId;   // item/magic to use
+	int16              Target;     // -1 for everyone
+	//FLOAT              flRemainingTime;  // remaining waiting time before the action start
+};
+
 /**
  *
  */
@@ -59,6 +67,10 @@ private:
 
 	int16 PreviousEnemyTarget;
 
+	EBattleActionType ActionType;
+
+	int16 ObjectId;
+
 	UPROPERTY()
 	UPALBattleMenu* BattleMenu;
 
@@ -74,6 +86,10 @@ public:
 
 	void BattleUIWait();
 
+	SIZE_T GetCurrentRoleId() const;
+
+	FBattleAction GetBattleAction() const;
+
 	bool IsAutoAttack() const;
 
 	bool IsRepeat() const;
@@ -81,6 +97,8 @@ public:
 	bool IsForce() const;
 
 	bool IsFlee() const;
+
+	void Flee();
 
 	void SetAutoAttack(bool bInAutoAttack);
 

@@ -282,7 +282,8 @@ void APALBattleGameMode::BattlePostActionCheck(bool bCheckRoles)
 	}
 }
 
-void APALBattleGameMode::BattleEnemyPerformAction(SIZE_T EnemyIndex) {
+void APALBattleGameMode::BattleEnemyPerformAction(SIZE_T EnemyIndex)
+{
 	BattleBackupStat();
 
 	UPALPlayerStateData* PlayerStateData = MainPlayerStatePrivate->GetPlayerStateData();
@@ -321,11 +322,96 @@ void APALBattleGameMode::BattleEnemyPerformAction(SIZE_T EnemyIndex) {
 	SIZE_T TargetRoleId = TargetRoleData->RoleId;
 }
 
-void APALBattleGameMode::BattleCommitAction(bool bRepeat) {
+void APALBattleGameMode::BattleCommitAction(bool bRepeat)
+{
+	SIZE_T CurrentRoleId = MainPlayerControllerPrivate->GetCurrentRoleId();
+	FBattleRole& CurrentRole = *BattleRoleMap.Find(CurrentRoleId);
+	if (!bRepeat)
+	{
+		CurrentRole.Action = MainPlayerControllerPrivate->GetBattleAction();
+	}
+	else
+	{
+		int16 Target = CurrentRole.Action.Target;
+		CurrentRole.Action = CurrentRole.PreviousAction;
+		CurrentRole.Action.Target = Target;
 
+		if (CurrentRole.Action.ActionType == EBattleActionType::BattleActionPass)
+		{
+			CurrentRole.Action.ActionType = EBattleActionType::BattleActionAttack;
+			CurrentRole.Action.ItemOrMagicId = 0;
+			CurrentRole.Action.Target = -1;
+		}
+	}
+
+	// Check if the action is valid
+	UPALGameData* GameData = GetGameInstance<UPALGameInstance>()->GetGameData();
+	UPALGameStateData* GameStateData = Cast<APALGameState>(GameState)->GetGameStateData();
+	UPALPlayerStateData* PlayerStateData = MainPlayerStatePrivate->GetPlayerStateData();
+	switch (CurrentRole.Action.ActionType)
+	{
+	case EBattleActionType::BattleActionMagic:
+	{
+		int16 MagicId = CurrentRole.Action.ItemOrMagicId;
+		int16 CostMP = GameData->Magics[GameStateData->Objects[MagicId].Magic.MagicNumber].CostMP;
+
+		if (PlayerStateData->PlayerRoles.MP[CurrentRoleId] < CostMP)
+		{
+			int16 MagicType = GameData->Magics[GameStateData->Objects[MagicId].Magic.MagicNumber].Type;
+			if (MagicType == FMagicType::MagicTypeApplyToPlayer || MagicType == FMagicType::MagicTypeApplyToParty ||
+				MagicType == FMagicType::MagicTypeTrance)
+			{
+				CurrentRole.Action.ActionType = EBattleActionType::BattleActionDefend;
+			}
+			else
+			{
+				CurrentRole.Action.ActionType = EBattleActionType::BattleActionAttack;
+				if (CurrentRole.Action.Target == -1)
+				{
+					CurrentRole.Action.Target = 0;
+				}
+				CurrentRole.Action.ItemOrMagicId = 0;
+			}
+		}
+		break;
+	}
+
+	case EBattleActionType::BattleActionUseItem:
+	{
+		int16 ItemId = CurrentRole.Action.ItemOrMagicId;
+
+		if ((GameStateData->Objects[ItemId].Item.Flags & EPALItemFlag::ItemFlagConsuming) == 0)
+		{
+			break;
+		}
+	}
+
+	case EBattleActionType::BattleActionThrowItem:
+	{
+		for (FInventoryItem& IventoryItem : PlayerStateData->Inventory) {
+			if (IventoryItem.Item == CurrentRole.Action.ItemOrMagicId) {
+				IventoryItem.InUseAmount++;
+				break;
+			}
+		}
+		break;
+	}
+
+	default:
+		break;
+	}
+
+	if (MainPlayerControllerPrivate->GetBattleAction().ActionType == EBattleActionType::BattleActionFlee)
+	{
+		MainPlayerControllerPrivate->Flee();
+	}
+
+	CurrentRole.State = EPALFighterState::DoingMove;
+	MainPlayerControllerPrivate->BattleUIWait();
 }
 
-void APALBattleGameMode::BattleRolePerformAction(SIZE_T RoleId) {
+void APALBattleGameMode::BattleRolePerformAction(SIZE_T RoleId)
+{
 
 }
 
@@ -817,7 +903,7 @@ void APALBattleGameMode::Tick(float DeltaTime)
 						BattleCommitAction(false);
 					}
 
-					// Perform the action for this player.
+					// Perform the action for this role.
 					CurrentMovingRoleId = RoleId;
 					BattleRolePerformAction(RoleId);
 				}

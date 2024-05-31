@@ -22,14 +22,6 @@ enum EPALFighterState : uint8
 	DoingMove,   // doing the actual move
 };
 
-struct FBattleAction
-{
-	EBattleActionType  ActionType;
-	uint16             ItemOrMagicId;   // item/magic to use
-	int16              Target;     // -1 for everyone
-	//FLOAT              flRemainingTime;  // remaining waiting time before the action start
-};
-
 struct FBattleRole
 {
 	float TimeMeter;          // time-charging meter (0 = empty, 100 = full).

@@ -269,6 +269,18 @@ struct FMagic
 	int16 Sound;                // sound played when using this magic
 };
 
+enum FMagicType : uint16
+{
+	MagicTypeNormal = 0,
+	MagicTypeAttackAll = 1,  // draw the effect on each of the enemies
+	MagicTypeAttackWhole = 2,  // draw the effect on the whole enemy team
+	MagicTypeAttackField = 3,  // draw the effect on the battle field
+	MagicTypeApplyToPlayer = 4,  // the magic is used on one player
+	MagicTypeApplyToParty = 5,  // the magic is used on the whole party
+	MagicTypeTrance = 8,  // trance the player
+	MagicTypeSummon = 9,  // summon
+};
+
 struct FBattleField
 {
 	uint16 ScreenWave;                      // level of screen waving

@@ -35,6 +35,27 @@ void APALBattlePlayerController::BattleUIWait()
 	UIStatus = EPALBattleUIStatus::BattleUIWait;
 }
 
+SIZE_T APALBattlePlayerController::GetCurrentRoleId() const
+{
+	return CurrentRoleId;
+}
+
+FBattleAction APALBattlePlayerController::GetBattleAction() const
+{
+	FBattleAction Action;
+	Action.ActionType = ActionType;
+	Action.Target = SelectedIndex;
+	if (ActionType == EBattleActionType::BattleActionAttack)
+	{
+		Action.ItemOrMagicId = (bAutoAttack ? 1 : 0);
+	}
+	else
+	{
+		Action.ItemOrMagicId = ObjectId;
+	}
+	return Action;
+}
+
 bool APALBattlePlayerController::IsAutoAttack() const
 {
 	return bAutoAttack;
@@ -53,6 +74,11 @@ bool APALBattlePlayerController::IsForce() const
 bool APALBattlePlayerController::IsFlee() const
 {
 	return bFlee;
+}
+
+void APALBattlePlayerController::Flee()
+{
+	bFlee = true;
 }
 
 void APALBattlePlayerController::SetAutoAttack(bool bInAutoAttack)
@@ -82,16 +108,18 @@ void APALBattlePlayerController::ClearTeamAction()
 	bFlee = false;
 }
 
-void APALBattlePlayerController::SetUISourceTargetAction(SIZE_T NewRoleId, int16 ToSelectIndex, EBattleActionType ActionType)
+void APALBattlePlayerController::SetUISourceTargetAction(SIZE_T NewRoleId, int16 ToSelectIndex, EBattleActionType NewActionType)
 {
 	CurrentRoleId = NewRoleId;
 	SelectedIndex = ToSelectIndex;
+	ActionType = NewActionType;
 }
 
 void APALBattlePlayerController::OnEscape()
 {
 	UPALPlayerStateData* PlayerStateData = GetPlayerState<APALPlayerState>()->GetPlayerStateData();
-	if (bAutoAttack && !PlayerStateData->bAutoBattle) {
+	if (bAutoAttack && !PlayerStateData->bAutoBattle)
+	{
 		SetAutoAttack(false);
 	}
 }

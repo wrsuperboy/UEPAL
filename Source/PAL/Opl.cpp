@@ -1157,7 +1157,7 @@ void Opl3Generate(Opl3Chip* Chip, int16* Buf)
 
 	if (Chip->EgTimerRem || Chip->EgState)
 	{
-		if (Chip->EgTimer == 0xfffffffff)
+		if (Chip->EgTimer == 0xfffffffffu)
 		{
 			Chip->EgTimer = 0;
 			Chip->EgTimerRem = 1;
